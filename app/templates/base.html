@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="{{ url_for('static', filename='images/hurricane.png') }}">
+    <title>{{ title }} | Traqueur de Tempêtes</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <header>
+        <h1>Bienvenue sur "Traqueur de Tempêtes" !</h1>
+        <img src="{{ url_for('static', filename='images/hurricane.png') }}" alt="Hurricane Logo" width="100">
+        <p>Informez-vous sur les tempêtes actuellement actifs dans le monde.</p>
+    </header>
+    <div class="angry-grid">
+        {% block content %}{% endblock %}
+    </div>
+    <footer>
+        <p>&copy; {{ year }} | Traqueur de Tempêtes. Tous droits réservés.</p>
+    </footer>
+</body>
+</html>
