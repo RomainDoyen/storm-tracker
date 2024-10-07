@@ -118,6 +118,39 @@ function updateCyclones() {
 
 setInterval(updateCyclones, 600000); // Interroger toutes les 10 minutes (600000 millisecondes)
 
+map.scrollWheelZoom.disable();
+map.dragging.disable();
+
+var isZoomEnabled = false;
+
+function toggleZoom() {
+    if (isZoomEnabled) {
+        map.scrollWheelZoom.disable();
+        map.dragging.disable();
+        this.innerHTML = 'Activer Zoom';
+    } else {
+        map.scrollWheelZoom.enable();
+        map.dragging.enable();
+        this.innerHTML = 'Désactiver Zoom';
+    }
+    isZoomEnabled = !isZoomEnabled;
+}
+
+var zoomToggleButton = L.control({position: 'topright'});
+
+zoomToggleButton.onAdd = function (map) {
+    var div = L.DomUtil.create('div', 'leaflet-bar leaflet-control leaflet-control-custom');
+    div.innerHTML = 'Activer Zoom';
+    div.style.backgroundColor = '#aa0e0b';
+    div.style.color = '#fff';
+    div.style.padding = '5px';
+    div.style.cursor = 'pointer';
+    div.onclick = toggleZoom;
+    return div;
+};
+
+zoomToggleButton.addTo(map);
+
 map.whenReady(function() {
     loadCyclones();
     updateCyclones();
