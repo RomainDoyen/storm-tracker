@@ -1,3 +1,5 @@
+import getIconUrl from '../js/data/classification.js';
+
 var map = L.map('map').setView([10, 20], 2);
 
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
