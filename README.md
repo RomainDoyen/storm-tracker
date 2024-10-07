@@ -5,7 +5,17 @@ This is a simple web application that tracks storms in real-time. It uses the [T
 ## Installation
 
 1. Clone the repository
+
+```bash
+git clone https://github.com/RomainDoyen/storm-tracker.git
+```
+
 2. Install the dependencies
+
+```bash
+pip install -r requirements.txt
+```
+
 3. Run the application
 
 ```bash
