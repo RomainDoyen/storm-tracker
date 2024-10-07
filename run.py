@@ -8,4 +8,4 @@ if __name__ == '__main__':
     thread.start()
 
     # app.run(debug=True, port=7000)
-    app.run(debug=False, host='0.0.0.0')
+    app.run()
