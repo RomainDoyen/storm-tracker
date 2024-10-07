@@ -7,6 +7,9 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '© OpenStreetMap'
 }).addTo(map);
 
+var cycloneMarkers = {};
+var haloLayer = null;
+
 function loadCyclones() {
     fetch('/static/data/cyclones.json')
         .then(response => response.json())
