@@ -11,17 +11,17 @@ var cycloneMarkers = {};
 var haloLayer = null;
 
 function loadCyclones() {
-    fetch('/static/data/cyclones.json')
+    fetch('/cyclones-data')  // Changement ici pour charger depuis la route Flask
         .then(response => response.json())
         .then(cyclones => {
 
-          var item0 = document.getElementById('item-0');
-          var cycloneList = "<ul>";
+            var item0 = document.getElementById('item-0');
+            var cycloneList = "<ul>";
 
-            cyclones.forEach((cyclone, index)  => {
+            cyclones.forEach((cyclone, index) => {
                 cycloneList += `
                   <li id="cyclone-${index}" class="cyclone-item">
-                    <h4>${cyclone.name} (${cyclone.id})</h4> 
+                    <h4>${cyclone.name} (${cyclone.idCyclone})</h4> 
                   </li>`;
 
                 var customIcon = L.icon({
@@ -32,7 +32,7 @@ function loadCyclones() {
                 var marker = L.marker([cyclone.lat, cyclone.lon], { icon: customIcon })
                     .bindPopup(`
                         <b>Nom:</b> ${cyclone.name}<br>
-                        <b>ID de la tempête:</b> ${cyclone.id}<br>
+                        <b>ID de la tempête:</b> ${cyclone.idCyclone}<br>
                         <b>Vitesse maximale des vents:</b> ${cyclone.vmax} km/h<br>
                         <b>Pression minimale:</b> ${cyclone.mslp} bar<br>
                         <b>Classification:</b> ${cyclone.classification}<br>
@@ -47,40 +47,40 @@ function loadCyclones() {
             var selectedCycloneIndex = null;
 
             cyclones.forEach((cyclone, index) => {
-              var listItem = document.getElementById(`cyclone-${index}`);
-              listItem.addEventListener('click', function() {
-                  if (selectedCycloneIndex === index) {
-                    listItem.classList.remove('selected');
-                    selectedCycloneIndex = null;
+                var listItem = document.getElementById(`cyclone-${index}`);
+                listItem.addEventListener('click', function() {
+                    if (selectedCycloneIndex === index) {
+                        listItem.classList.remove('selected');
+                        selectedCycloneIndex = null;
 
+                        if (haloLayer) {
+                            map.removeLayer(haloLayer);
+                            haloLayer = null;
+                        }
+        
+                        return;
+                    }
+
+                    document.querySelectorAll('.cyclone-item').forEach(function(item) {
+                        item.classList.remove('selected');
+                    });
+        
+                    listItem.classList.add('selected');
+                    selectedCycloneIndex = index;
+
+                    map.setView([cyclone.lat, cyclone.lon], 4);
+                  
                     if (haloLayer) {
                         map.removeLayer(haloLayer);
-                        haloLayer = null;
                     }
-        
-                    return;
-                  }
 
-                  document.querySelectorAll('.cyclone-item').forEach(function(item) {
-                    item.classList.remove('selected');
-                  });
-        
-                  listItem.classList.add('selected');
-                  selectedCycloneIndex = index;
-
-                  map.setView([cyclone.lat, cyclone.lon], 4);
-                  
-                  if (haloLayer) {
-                    map.removeLayer(haloLayer);
-                  }
-
-                  haloLayer = L.circle([cyclone.lat, cyclone.lon], {
-                      color: 'blue',
-                      fillColor: '#30a1e6',
-                      fillOpacity: 0.5,
-                      radius: 300000
-                  }).addTo(map);
-              });
+                    haloLayer = L.circle([cyclone.lat, cyclone.lon], {
+                        color: 'blue',
+                        fillColor: '#30a1e6',
+                        fillOpacity: 0.5,
+                        radius: 300000
+                    }).addTo(map);
+                });
             });
         })
         .catch(error => console.error('Erreur lors du chargement des cyclones:', error));
@@ -105,7 +105,7 @@ function updateCyclones() {
                 L.marker([cyclone.lat, cyclone.lon], { icon: customIcon })
                     .bindPopup(`
                         <b>Nom:</b> ${cyclone.name}<br>
-                        <b>ID de la tempête:</b> ${cyclone.id}<br>
+                        <b>ID de la tempête:</b> ${cyclone.idCyclone}<br>
                         <b>Vitesse maximale des vents:</b> ${cyclone.vmax} km/h<br>
                         <b>Pression minimale:</b> ${cyclone.mslp} bar<br>
                         <b>Classification:</b> ${cyclone.classification}<br>
@@ -116,7 +116,7 @@ function updateCyclones() {
         .catch(error => console.error('Erreur lors du chargement des cyclones:', error));
 }
 
-setInterval(updateCyclones, 600000); // Interroger toutes les 10 minutes (600000 millisecondes)
+setInterval(updateCyclones, 600000); // Mettre à jour toutes les 10 minutes (600000 ms)
 
 map.scrollWheelZoom.disable();
 map.dragging.disable();
@@ -136,7 +136,7 @@ function toggleZoom() {
     isZoomEnabled = !isZoomEnabled;
 }
 
-var zoomToggleButton = L.control({position: 'topright'});
+var zoomToggleButton = L.control({ position: 'topright' });
 
 zoomToggleButton.onAdd = function (map) {
     var div = L.DomUtil.create('div', 'leaflet-bar leaflet-control leaflet-control-custom');

@@ -1,9 +1,15 @@
-import json
-import os
-from flask import jsonify, render_template
+from flask import render_template, jsonify
 from app import app
 import datetime
-from app.functions.update import update_cyclones_data
+import os
+from supabase import create_client, Client
+from dotenv import load_dotenv
+
+load_dotenv()
+
+url: str = os.getenv("SUPABASE_URL") # type: ignore
+key: str = os.getenv("SUPABASE_KEY") # type: ignore
+supabase: Client = create_client(url, key)
 
 @app.route('/')
 @app.route('/index')
@@ -14,14 +20,9 @@ def index():
 
 @app.route('/cyclones-data')
 def cyclones_data():
-    json_file_path = os.path.join(app.root_path, 'static', 'data', 'cyclones.json')
-
-    if os.path.exists(json_file_path):
-        with open(json_file_path, 'r') as json_file:
-            cyclones = json.load(json_file)
-    else:
-        update_cyclones_data()
-        with open(json_file_path, 'r') as json_file:
-            cyclones = json.load(json_file)
-
-    return jsonify(cyclones)
+    try:
+        response = supabase.table("Cyclones").select("*").execute()
+        cyclones = response.data
+        return jsonify(cyclones)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
