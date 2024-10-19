@@ -16,6 +16,13 @@ git clone https://github.com/RomainDoyen/storm-tracker.git
 pip install -r requirements.txt
 ```
 
+3. Set the environment variables in a `.env` file
+
+```bash
+SUPABASE_URL=<your_supabase_url>
+SUPABASE_KEY=<your_supabase_key>
+```
+
 3. Run the application
 
 ```bash
