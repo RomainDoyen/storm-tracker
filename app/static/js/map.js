@@ -7,11 +7,13 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '© OpenStreetMap'
 }).addTo(map);
 
+var defaultView = [10, 20];
+var defaultZoom = 2;
 var cycloneMarkers = {};
 var haloLayer = null;
 
 function loadCyclones() {
-    fetch('/cyclones-data')  // Changement ici pour charger depuis la route Flask
+    fetch('/cyclones-data')
         .then(response => response.json())
         .then(cyclones => {
 
@@ -136,7 +138,12 @@ function toggleZoom() {
     isZoomEnabled = !isZoomEnabled;
 }
 
+function resetMapView() {
+    map.setView(defaultView, defaultZoom); // Remettre la vue de la carte à la position par défaut
+}
+
 var zoomToggleButton = L.control({ position: 'topright' });
+var resetViewButton = L.control({ position: 'topright' });
 
 zoomToggleButton.onAdd = function (map) {
     var div = L.DomUtil.create('div', 'leaflet-bar leaflet-control leaflet-control-custom');
@@ -149,7 +156,19 @@ zoomToggleButton.onAdd = function (map) {
     return div;
 };
 
+resetViewButton.onAdd = function (map) {
+    var div = L.DomUtil.create('div', 'leaflet-bar leaflet-control leaflet-control-custom');
+    div.innerHTML = 'Remettre Vue';
+    div.style.backgroundColor = '#006494';
+    div.style.color = '#fff';
+    div.style.padding = '5px';
+    div.style.cursor = 'pointer';
+    div.onclick = resetMapView;
+    return div;
+};
+
 zoomToggleButton.addTo(map);
+resetViewButton.addTo(map);
 
 map.whenReady(function() {
     loadCyclones();
