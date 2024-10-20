@@ -139,7 +139,7 @@ function toggleZoom() {
 }
 
 function resetMapView() {
-    map.setView(defaultView, defaultZoom); // Remettre la vue de la carte à la position par défaut
+    map.setView(defaultView, defaultZoom);
 }
 
 var zoomToggleButton = L.control({ position: 'topright' });
@@ -158,7 +158,7 @@ zoomToggleButton.onAdd = function (map) {
 
 resetViewButton.onAdd = function (map) {
     var div = L.DomUtil.create('div', 'leaflet-bar leaflet-control leaflet-control-custom');
-    div.innerHTML = 'Remettre Vue';
+    div.innerHTML = 'Vue par défaut';
     div.style.backgroundColor = '#006494';
     div.style.color = '#fff';
     div.style.padding = '5px';
