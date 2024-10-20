@@ -15,7 +15,7 @@ function loadCyclones() {
         .then(response => response.json())
         .then(cyclones => {
 
-            var item0 = document.getElementById('item-0');
+            var item0 = document.getElementById('active-storms');
             var cycloneList = "<ul>";
 
             cyclones.forEach((cyclone, index) => {
