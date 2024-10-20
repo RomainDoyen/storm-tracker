@@ -16,14 +16,29 @@ git clone https://github.com/RomainDoyen/storm-tracker.git
 pip install -r requirements.txt
 ```
 
-3. Set the environment variables in a `.env` file
+3. Create table in Supabase
+
+```sql
+CREATE TABLE Cyclones (
+  id VARCHAR(50) PRIMARY KEY,
+  idCyclone VARCHAR(50),
+  name VARCHAR(100),
+  vmax NUMERIC,
+  mslp NUMERIC,
+  lat NUMERIC,
+  lon NUMERIC,
+  classification VARCHAR(50)
+);
+```
+
+4. Set the environment variables in a `.env` file
 
 ```bash
 SUPABASE_URL=<your_supabase_url>
 SUPABASE_KEY=<your_supabase_key>
 ```
 
-3. Run the application
+5. Run the application
 
 ```bash
 cd storm-tracker
