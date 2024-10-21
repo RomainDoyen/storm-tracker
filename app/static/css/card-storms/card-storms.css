@@ -1,0 +1,57 @@
+.card {
+  background-color: var(--card-background);
+  border: 1px solid var(--card-border);
+  border-radius: 5px;
+  padding: 15px;
+  box-shadow: 0 4px 6px var(--box-shadow);
+}
+
+#item-0 {
+  grid-row-start: 1;
+  grid-column-start: 5;
+  grid-row-end: 4;
+  grid-column-end: 6;
+  padding: 15px;
+}
+
+#item-0 h3 {
+  color: var(--h3-color);
+  font-size: 1.5em;
+  margin-bottom: 20px;
+}
+
+#item-0 ul {
+  list-style-type: none;
+  padding-left: 0;
+}
+
+#item-0 ul li {
+  padding: 8px;
+  margin-bottom: 8px;
+  background-color: var(--item-0-ul-li-background-color);
+  border: 1px solid var(--item-0-ul-li-border);
+  border-radius: 5px;
+  font-size: 1em;
+  transition: all 0.3s ease-in-out;
+}
+
+#item-0 ul li:hover {
+  background-color: var(--item-0-ul-li-hover-background-color);
+  border-color: var(--item-0-ul-li-hover-border);
+  cursor: pointer;
+}
+
+#item-0 ul li.selected {
+  background-color: var(--item-0-ul-li-selected-background-color);
+  color: var(--white);
+  font-weight: bold;
+  border-color: var(--item-0-ul-li-selected-border);
+}
+
+#item-0 ul li.selected h4 {
+  color: var(--white);
+}
+
+#item-0 ul li.selected:hover {
+  background-color: var(--item-0-ul-li-selected-background-color);
+}

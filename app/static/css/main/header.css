@@ -1,0 +1,7 @@
+header {
+  background: var(--header-background);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--header-border-bottom);
+  box-shadow: 0 4px 6px var(--box-shadow);
+}

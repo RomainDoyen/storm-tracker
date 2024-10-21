@@ -1,0 +1,63 @@
+@import url("header.css");
+@import url("footer.css");
+@import url("colors.css");
+
+*, 
+*::before, 
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: SUSE, Noto Sans, Arial, sans-serif;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background: var(--body-color);
+  background: -moz-linear-gradient(180deg, var(--body-color-primary) 0%, var(--body-color-secondary) 100%);
+  background: -webkit-linear-gradient(180deg, var(--body-color-primary) 0%, var(--body-color-secondary) 100%);
+  background: linear-gradient(180deg, var(--body-color-primary) 0%, var(--body-color-secondary) 100%);
+  filter: progid:DXImageTransform.Microsoft.gradient(startColorstr="var(--body-color-primary)",
+  endColorstr="var(--body-color-secondary)",
+  GradientType=1);
+}
+
+header, 
+footer {
+  color: var(--white);
+  text-align: center;
+  padding: 1em 0;
+}
+
+main {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  flex-direction: column;
+  text-align: center;
+}
+
+.content img, 
+.content h2, 
+.content p {
+  padding-bottom: 20px;
+}
+
+.container {
+  display: flex;
+  justify-content: space-between;
+  gap: 90px;
+  align-items: center;
+  padding: 20px;
+}
+
+.angry-grid {
+  display: grid; 
+  grid-template-rows: 1fr 1fr 1fr;
+  grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
+  gap: 0px;
+  height: 100%;
+}
