@@ -12,10 +12,19 @@ body {
     display: flex;
     flex-direction: column;
     min-height: 100vh;
+    background: rgb(3,15,132);
+    background: -moz-linear-gradient(180deg, rgba(3,15,132,1) 0%, rgba(0,166,255,1) 100%);
+    background: -webkit-linear-gradient(180deg, rgba(3,15,132,1) 0%, rgba(0,166,255,1) 100%);
+    background: linear-gradient(180deg, rgba(3,15,132,1) 0%, rgba(0,166,255,1) 100%);
+    filter: progid:DXImageTransform.Microsoft.gradient(startColorstr="#030f84",endColorstr="#00a6ff",GradientType=1);
 }
 
 header {
-    background-color: #006494;
+    background: rgba(255,255,255,0.16);
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid rgba(255,255,255,0.25);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
 header, footer {
@@ -25,7 +34,7 @@ header, footer {
 }
 
 footer {
-    background-color: #171717;
+    background-color: #012949;
 }
 
 main {
@@ -52,6 +61,8 @@ main {
 #map {
     width: 100%;
     height: 600px;
+    border-radius: 5px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
 .angry-grid {
@@ -62,8 +73,15 @@ main {
     height: 100%;
 }
 
+.card {
+    background-color: #3881e1;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    padding: 15px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
 #item-0 {
-    background-color: #343232; 
     grid-row-start: 1;
     grid-column-start: 5;
     grid-row-end: 4;
@@ -72,7 +90,7 @@ main {
 }
 
 #item-0 h3 {
-    color: #e4e3e3;
+    color: #012949;
     font-size: 1.5em;
     margin-bottom: 20px;
 }
@@ -89,15 +107,17 @@ main {
     border: 1px solid #ccc;
     border-radius: 5px;
     font-size: 1em;
+    transition: all 0.3s ease-in-out;
 }
 
 #item-0 ul li:hover {
-    background-color: #c0c3c7;
+    background-color: #35A4FB;
+    border-color: #004970;
     cursor: pointer;
 }
 
 #item-0 ul li.selected {
-    background-color: #006494;
+    background-color: #035CA3;
     color: white;
     font-weight: bold;
     border-color: #004970;
@@ -108,13 +128,17 @@ main {
 }
 
 #item-0 ul li.selected:hover {
-    background-color: #00587a;
+    background-color: #035CA3;
 }
 
 h4 {
-    color: #aa0e0b;
+    color: #0476D0;
     font-size: 1em;
     font-weight: 500;
+}
+
+h4:hover {
+    color: #024376;
 }
 
 #item-1 {
@@ -122,6 +146,7 @@ h4 {
     grid-column-start: 1;
     grid-row-end: 4;
     grid-column-end: 5;
+    padding: 15px;
 }
 
 .leaflet-touch .leaflet-bar a {
@@ -138,4 +163,8 @@ h4 {
 
 .leaflet-bar {
     background-color: #006494;
+}
+
+a.leaflet-popup-close-button:hover {
+    background-color: #f07876;
 }
