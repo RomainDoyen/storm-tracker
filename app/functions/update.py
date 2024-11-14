@@ -66,4 +66,4 @@ def update_cyclones_data():
 
                 save_cyclone_data(cyclone_data)
 
-        time.sleep(7200)  # Pause de 2 heures avant de mettre à jour les données
+        time.sleep(960)  # Pause de 2 heures avant de mettre à jour les données
