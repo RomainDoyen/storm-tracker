@@ -3,6 +3,7 @@
   height: 600px;
   border-radius: 5px;
   box-shadow: 0 4px 6px var(--box-shadow);
+  z-index: 1;
 }
 
 h4 {
@@ -17,10 +18,11 @@ h4:hover {
 
 #item-1 {
   grid-row-start: 1;
-  grid-column-start: 1;
   grid-row-end: 4;
+  grid-column-start: 1;
   grid-column-end: 5;
   padding: 15px;
+  z-index: 1;
 }
 
 .leaflet-touch 

@@ -22,6 +22,7 @@ body {
   filter: progid:DXImageTransform.Microsoft.gradient(startColorstr="var(--body-color-primary)",
   endColorstr="var(--body-color-secondary)",
   GradientType=1);
+  padding-bottom: 80px;
 }
 
 header, 
@@ -56,8 +57,63 @@ main {
 
 .angry-grid {
   display: grid; 
-  grid-template-rows: 1fr 1fr 1fr;
-  grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
-  gap: 0px;
+  grid-template-rows: auto auto;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 20px;
   height: 100%;
+  margin-bottom: 20px;
+  padding: 15px;
+}
+
+#item-0 {
+  grid-column: 5 / 6;
+  grid-row: 1 / 4;
+}
+
+#item-1 {
+  grid-column: 1 / 5;
+  grid-row: 1 / 4;
+}
+
+/* Media Queries pour la responsivité */
+@media (max-width: 960px) {
+  .angry-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  #item-0 {
+    order: 1;
+    width: 100%;
+  }
+
+  #item-1 {
+    order: 2;
+    width: 100%;
+  }
+
+  #map {
+    height: 400px;
+  }
+}
+
+@media (max-width: 768px) {
+  #map {
+    height: 350px;
+  }
+}
+
+@media (max-width: 576px) {
+  #map {
+    height: 300px;
+  }
+  
+  header h1 {
+    font-size: 1.5rem;
+  }
+  
+  header p {
+    font-size: 0.9rem;
+  }
 }

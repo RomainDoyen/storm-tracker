@@ -12,5 +12,22 @@
     <div id="item-1">
         <div id="map" style="height: 600px;"></div>
     </div>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
+        import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
+
+        // La configuration Firebase sera injectée par le serveur
+        const firebaseConfig = {
+            apiKey: "{{ firebase_config.api_key }}",
+            authDomain: "{{ firebase_config.auth_domain }}",
+            projectId: "{{ firebase_config.project_id }}",
+            storageBucket: "{{ firebase_config.storage_bucket }}",
+            messagingSenderId: "{{ firebase_config.messaging_sender_id }}",
+            appId: "{{ firebase_config.app_id }}"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+    </script>
     <script type="module" src="{{ url_for('static', filename='js/map.js') }}"></script>
 {% endblock %}
