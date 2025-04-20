@@ -33,11 +33,6 @@ CREATE TABLE Cyclones (
 
 4. Set the environment variables in a `.env` file
 
-```bash
-SUPABASE_URL=<your_supabase_url>
-SUPABASE_KEY=<your_supabase_key>
-```
-
 5. Run the application
 
 ```bash
