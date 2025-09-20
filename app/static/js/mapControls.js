@@ -6,10 +6,6 @@ export function setupMapControls(map) {
     zoomToggleButton.onAdd = function () {
         var div = L.DomUtil.create('div', 'leaflet-bar leaflet-control leaflet-control-custom');
         div.innerHTML = 'Activer le Zoom par défilement';
-        div.style.backgroundColor = '#aa0e0b';
-        div.style.color = '#fff';
-        div.style.padding = '5px';
-        div.style.cursor = 'pointer';
         div.onclick = toggleZoom.bind(div, map);
         return div;
     };
@@ -21,10 +17,6 @@ export function setupMapControls(map) {
     resetViewButton.onAdd = function () {
         var div = L.DomUtil.create('div', 'leaflet-bar leaflet-control leaflet-control-custom');
         div.innerHTML = 'Remettre la vue par défaut';
-        div.style.backgroundColor = '#006494';
-        div.style.color = '#fff';
-        div.style.padding = '5px';
-        div.style.cursor = 'pointer';
         div.onclick = function () {
             map.setView([10, 20], 2);
         };

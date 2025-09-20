@@ -1,19 +1,36 @@
 #map {
   width: 100%;
   height: 600px;
-  border-radius: 5px;
-  box-shadow: 0 4px 6px var(--box-shadow);
+  border-radius: var(--border-radius);
+  box-shadow: var(--box-shadow);
   z-index: 1;
+  overflow: hidden;
+  position: relative;
+}
+
+#map::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--ocean-gradient);
+  opacity: 0.1;
+  z-index: -1;
+  border-radius: var(--border-radius);
 }
 
 h4 {
-  color: var(--h4-color);
-  font-size: 1em;
-  font-weight: 500;
+  color: var(--text-primary);
+  font-family: var(--font-family);
+  font-size: 1rem;
+  font-weight: var(--font-weight-medium);
+  transition: color 0.3s ease;
 }
 
 h4:hover {
-  color: var(--h4-hover-color);
+  color: var(--accent-blue);
 }
 
 #item-1 {
@@ -21,29 +38,336 @@ h4:hover {
   grid-row-end: 4;
   grid-column-start: 1;
   grid-column-end: 5;
-  padding: 15px;
+  padding: 1rem;
   z-index: 1;
 }
 
-.leaflet-touch 
-.leaflet-bar a {
-  background-color: var(--leaflet-bar_touch-background-color);
-}
-
-.leaflet-touch 
-.leaflet-bar a span {
-  color: var(--white);
-}
-
-.leaflet-touch 
-.leaflet-bar a:hover {
-  background-color: var(--leaflet-bar_touch-background-color-hover);
+/* Contrôles de carte modernisés */
+.leaflet-control-zoom {
+  border: none !important;
+  box-shadow: var(--box-shadow-card) !important;
+  border-radius: var(--border-radius-small) !important;
+  overflow: hidden !important;
 }
 
 .leaflet-bar {
-  background-color: var(--leaflet-bar-background-color);
+  background: var(--white) !important;
+  border: none !important;
+  box-shadow: var(--box-shadow-card) !important;
+  border-radius: var(--border-radius-small) !important;
 }
 
-.leaflet-container .leaflet-popup-close-button a:hover {
-  color: #f07876;
+.leaflet-bar a {
+  background: var(--white) !important;
+  border: none !important;
+  color: var(--text-primary) !important;
+  font-family: var(--font-family) !important;
+  font-weight: var(--font-weight-medium) !important;
+  font-size: 18px !important;
+  width: 40px !important;
+  height: 40px !important;
+  line-height: 40px !important;
+  text-align: center !important;
+  transition: all 0.3s ease !important;
+  position: relative !important;
+}
+
+.leaflet-bar a:hover {
+  background: var(--accent-blue) !important;
+  color: var(--white) !important;
+  transform: scale(1.05) !important;
+}
+
+.leaflet-bar a:active {
+  transform: scale(0.95) !important;
+}
+
+/* Premier bouton (zoom in) */
+.leaflet-bar a:first-child {
+  border-bottom: 1px solid var(--gray-200) !important;
+}
+
+.leaflet-bar a:first-child::before {
+  content: '+' !important;
+  font-size: 20px !important;
+  font-weight: var(--font-weight-bold) !important;
+  position: absolute !important;
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) !important;
+}
+
+/* Deuxième bouton (zoom out) */
+.leaflet-bar a:last-child::before {
+  content: '−' !important;
+  font-size: 20px !important;
+  font-weight: var(--font-weight-bold) !important;
+  position: absolute !important;
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) !important;
+}
+
+/* Masquer les icônes par défaut de Leaflet */
+.leaflet-bar a span {
+  display: none !important;
+}
+
+.leaflet-bar a .leaflet-control-zoom-in,
+.leaflet-bar a .leaflet-control-zoom-out {
+  display: none !important;
+}
+
+/* Contrôles tactiles */
+.leaflet-touch .leaflet-bar a {
+  background: var(--white) !important;
+  color: var(--text-primary) !important;
+  border: none !important;
+  box-shadow: var(--box-shadow-card) !important;
+}
+
+.leaflet-touch .leaflet-bar a:hover {
+  background: var(--accent-blue) !important;
+  color: var(--white) !important;
+}
+
+/* Bouton de fermeture des popups */
+.leaflet-container .leaflet-popup-close-button {
+  background: var(--white) !important;
+  color: var(--text-primary) !important;
+  border-radius: 50% !important;
+  width: 24px !important;
+  height: 24px !important;
+  line-height: 24px !important;
+  text-align: center !important;
+  font-size: 16px !important;
+  font-weight: var(--font-weight-bold) !important;
+  transition: all 0.3s ease !important;
+  box-shadow: var(--box-shadow-card) !important;
+}
+
+.leaflet-container .leaflet-popup-close-button:hover {
+  background: var(--accent-red) !important;
+  color: var(--white) !important;
+  transform: scale(1.1) !important;
+}
+
+/* Style des popups */
+.leaflet-popup-content-wrapper {
+  background: var(--white) !important;
+  border-radius: var(--border-radius) !important;
+  box-shadow: var(--box-shadow) !important;
+  border: none !important;
+  padding: 0 !important;
+}
+
+.leaflet-popup-content {
+  margin: 0 !important;
+  padding: 1rem !important;
+  font-family: var(--font-family) !important;
+  line-height: 1.5 !important;
+}
+
+.leaflet-popup-tip {
+  background: var(--white) !important;
+  box-shadow: var(--box-shadow-card) !important;
+}
+
+/* Contrôles de couche (si présents) */
+.leaflet-control-layers {
+  background: var(--white) !important;
+  border: none !important;
+  border-radius: var(--border-radius-small) !important;
+  box-shadow: var(--box-shadow-card) !important;
+  font-family: var(--font-family) !important;
+}
+
+.leaflet-control-layers-toggle {
+  background: var(--white) !important;
+  border: none !important;
+  border-radius: var(--border-radius-small) !important;
+  transition: all 0.3s ease !important;
+}
+
+.leaflet-control-layers-toggle:hover {
+  background: var(--accent-blue) !important;
+  transform: scale(1.05) !important;
+}
+
+/* Contrôles d'attribution */
+.leaflet-control-attribution {
+  background: rgba(255, 255, 255, 0.9) !important;
+  backdrop-filter: blur(10px) !important;
+  -webkit-backdrop-filter: blur(10px) !important;
+  border: none !important;
+  border-radius: var(--border-radius-small) !important;
+  font-family: var(--font-family) !important;
+  font-size: 0.8rem !important;
+  color: var(--text-secondary) !important;
+  padding: 0.5rem !important;
+  box-shadow: var(--box-shadow-card) !important;
+}
+
+.leaflet-control-attribution a {
+  color: var(--accent-blue) !important;
+  text-decoration: none !important;
+  transition: color 0.3s ease !important;
+}
+
+.leaflet-control-attribution a:hover {
+  color: var(--accent-red) !important;
+}
+
+/* Contrôles de localisation (si présents) */
+.leaflet-control-locate {
+  background: var(--white) !important;
+  border: none !important;
+  border-radius: var(--border-radius-small) !important;
+  box-shadow: var(--box-shadow-card) !important;
+}
+
+.leaflet-control-locate a {
+  background: var(--white) !important;
+  color: var(--text-primary) !important;
+  border: none !important;
+  border-radius: var(--border-radius-small) !important;
+  transition: all 0.3s ease !important;
+  font-size: 18px !important;
+  width: 40px !important;
+  height: 40px !important;
+  line-height: 40px !important;
+  text-align: center !important;
+}
+
+.leaflet-control-locate a:hover {
+  background: var(--accent-green) !important;
+  color: var(--white) !important;
+  transform: scale(1.05) !important;
+}
+
+/* Contrôles de plein écran (si présents) */
+.leaflet-control-fullscreen {
+  background: var(--white) !important;
+  border: none !important;
+  border-radius: var(--border-radius-small) !important;
+  box-shadow: var(--box-shadow-card) !important;
+}
+
+.leaflet-control-fullscreen a {
+  background: var(--white) !important;
+  color: var(--text-primary) !important;
+  border: none !important;
+  border-radius: var(--border-radius-small) !important;
+  transition: all 0.3s ease !important;
+  font-size: 18px !important;
+  width: 40px !important;
+  height: 40px !important;
+  line-height: 40px !important;
+  text-align: center !important;
+}
+
+.leaflet-control-fullscreen a:hover {
+  background: var(--accent-orange) !important;
+  color: var(--white) !important;
+  transform: scale(1.05) !important;
+}
+
+/* Amélioration générale des contrôles */
+.leaflet-control {
+  background: transparent !important;
+  border: none !important;
+}
+
+.leaflet-control a {
+  text-decoration: none !important;
+  outline: none !important;
+}
+
+.leaflet-control a:focus {
+  outline: 2px solid var(--accent-blue) !important;
+  outline-offset: 2px !important;
+}
+
+/* Contrôles personnalisés */
+.leaflet-control-custom {
+  background: var(--white) !important;
+  border: none !important;
+  border-radius: var(--border-radius-small) !important;
+  box-shadow: var(--box-shadow-card) !important;
+  font-family: var(--font-family) !important;
+  font-weight: var(--font-weight-medium) !important;
+  font-size: 0.9rem !important;
+  color: var(--text-primary) !important;
+  padding: 0.75rem 1rem !important;
+  cursor: pointer !important;
+  transition: all 0.3s ease !important;
+  margin-bottom: 0.5rem !important;
+  min-width: 200px !important;
+  text-align: center !important;
+  position: relative !important;
+  overflow: hidden !important;
+}
+
+.leaflet-control-custom::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--accent-blue);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  z-index: -1;
+}
+
+.leaflet-control-custom:hover {
+  color: var(--white) !important;
+  transform: translateY(-2px) !important;
+  box-shadow: var(--box-shadow-hover) !important;
+}
+
+.leaflet-control-custom:hover::before {
+  opacity: 1;
+}
+
+.leaflet-control-custom:active {
+  transform: translateY(0) !important;
+}
+
+/* Bouton de zoom par défilement */
+.leaflet-control-custom:first-of-type {
+  background: var(--white) !important;
+  color: var(--text-primary) !important;
+}
+
+.leaflet-control-custom:first-of-type::before {
+  background: var(--accent-green);
+}
+
+/* Bouton de remise à zéro */
+.leaflet-control-custom:last-of-type {
+  background: var(--white) !important;
+  color: var(--text-primary) !important;
+}
+
+.leaflet-control-custom:last-of-type::before {
+  background: var(--accent-orange);
+}
+
+/* Responsive pour les contrôles personnalisés */
+@media (max-width: 768px) {
+  .leaflet-control-custom {
+    font-size: 0.8rem !important;
+    padding: 0.5rem 0.75rem !important;
+    min-width: 150px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .leaflet-control-custom {
+    font-size: 0.75rem !important;
+    padding: 0.4rem 0.6rem !important;
+    min-width: 120px !important;
+  }
 }

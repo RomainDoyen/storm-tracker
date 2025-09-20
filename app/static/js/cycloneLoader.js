@@ -1,6 +1,9 @@
 import getIconUrl from '../data/classification.js';
 import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
 
+// Variable globale pour stocker la référence de la carte
+let globalMap = null;
+
 var cycloneMarkers = {};
 var haloLayer = null;
 
@@ -29,9 +32,17 @@ function groupCyclonesByBasin(cyclones) {
 function createBasinSection(basinName, cyclones) {
     if (cyclones.length === 0) return '';
 
-    let html = `<div class="basin-section">
-        <h3>${basinName}</h3>
-        <ul>`;
+    const basinId = basinName.toLowerCase().replace(/\s+/g, '-');
+    const isFirstSection = basinName === 'Atlantique Nord'; // Ouvrir le premier accordéon par défaut
+
+    let html = `<div class="basin-section" data-basin="${basinId}">
+        <div class="basin-header ${isFirstSection ? 'active' : ''}" onclick="toggleAccordion('${basinId}')">
+            <h3 class="basin-title">${basinName} (${cyclones.length})</h3>
+            <span class="accordion-icon">▼</span>
+        </div>
+        <div class="basin-content ${isFirstSection ? 'active' : ''}">
+            <div class="basin-content-inner">
+                <ul>`;
 
     cyclones.forEach(cyclone => {
         const sourceTag = cyclone.source ? `<span class="source-tag">${cyclone.source.toUpperCase()}</span>` : '';
@@ -51,21 +62,35 @@ function createBasinSection(basinName, cyclones) {
             </li>`;
     });
 
-    html += `</ul></div>`;
+    html += `</ul>
+            </div>
+        </div>
+    </div>`;
     return html;
 }
 
 export async function loadCyclones(map) {
+    globalMap = map; // Stocker la référence de la carte
+    const loadingSpinner = document.getElementById('loading-spinner');
+    const activeStorms = document.getElementById('active-storms');
+    
     try {
+        // Afficher le spinner
+        loadingSpinner.classList.remove('loading-hidden');
+        activeStorms.classList.add('loading-hidden');
+        
         const db = getFirestore();
         const cyclonesRef = collection(db, "Cyclones");
         const snapshot = await getDocs(cyclonesRef);
         const cyclones = snapshot.docs.map(doc => doc.data());
 
-        var item0 = document.getElementById('active-storms');
+        // Masquer le spinner et afficher les données
+        loadingSpinner.classList.add('loading-hidden');
+        activeStorms.classList.remove('loading-hidden');
+        activeStorms.classList.add('data-loaded');
         
         if (cyclones.length === 0) {
-            item0.innerHTML = '<p class="no-storms">Aucun cyclone actif actuellement.</p>';
+            activeStorms.innerHTML = '<p class="no-storms">Aucun cyclone actif actuellement.</p>';
             return;
         }
 
@@ -79,7 +104,7 @@ export async function loadCyclones(map) {
             }
         });
 
-        item0.innerHTML = html;
+        activeStorms.innerHTML = html;
 
         // Ajouter les marqueurs sur la carte
         cyclones.forEach((cyclone, index) => {
@@ -108,8 +133,16 @@ export async function loadCyclones(map) {
         attachCycloneEvents(cyclones, map);
     } catch (error) {
         console.error('Erreur lors du chargement des cyclones:', error);
-        document.getElementById('active-storms').innerHTML = 
-            '<p class="error-message">Erreur lors du chargement des données. Veuillez réessayer plus tard.</p>';
+        
+        // Masquer le spinner et afficher l'erreur
+        loadingSpinner.classList.add('loading-hidden');
+        activeStorms.classList.remove('loading-hidden');
+        activeStorms.innerHTML = 
+            '<div class="error-message">' +
+            '<p>❌ Erreur lors du chargement des données</p>' +
+            '<p>Veuillez réessayer plus tard ou vérifier votre connexion.</p>' +
+            '<button onclick="location.reload()" class="retry-button">🔄 Réessayer</button>' +
+            '</div>';
     }
 }
 
@@ -144,3 +177,76 @@ function attachCycloneEvents(cyclones, map) {
         });
     });
 }
+
+// Fonction pour forcer la mise à jour des données
+async function forceRefreshData() {
+    const refreshButton = document.getElementById('refresh-button');
+    const originalText = refreshButton.innerHTML;
+    
+    try {
+        // Désactiver le bouton et afficher un spinner
+        refreshButton.disabled = true;
+        refreshButton.innerHTML = `
+            <img src="/static/images/refresh-cw-alt-2-svgrepo-com.svg" alt="Actualiser" class="refresh-icon loading">
+        `;
+        
+        // Appeler l'API pour forcer la mise à jour
+        const response = await fetch('/force-update', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        });
+        
+        const result = await response.json();
+        
+        if (result.status === 'success') {
+            // Attendre un peu puis recharger les données
+            setTimeout(async () => {
+                if (globalMap) {
+                    await loadCyclones(globalMap);
+                }
+            }, 2000);
+        } else {
+            console.error('Erreur lors de la mise à jour:', result.message);
+        }
+    } catch (error) {
+        console.error('Erreur lors de la mise à jour:', error);
+    } finally {
+        // Réactiver le bouton
+        refreshButton.disabled = false;
+        refreshButton.innerHTML = originalText;
+    }
+}
+
+// Fonction pour gérer les accordéons
+window.toggleAccordion = function(basinId) {
+    const basinSection = document.querySelector(`[data-basin="${basinId}"]`);
+    if (!basinSection) return;
+
+    const header = basinSection.querySelector('.basin-header');
+    const content = basinSection.querySelector('.basin-content');
+    const icon = basinSection.querySelector('.accordion-icon');
+
+    const isActive = header.classList.contains('active');
+
+    if (isActive) {
+        // Fermer l'accordéon
+        header.classList.remove('active');
+        content.classList.remove('active');
+        icon.style.transform = 'rotate(0deg)';
+    } else {
+        // Ouvrir l'accordéon
+        header.classList.add('active');
+        content.classList.add('active');
+        icon.style.transform = 'rotate(180deg)';
+    }
+};
+
+// Initialiser le bouton de rafraîchissement
+document.addEventListener('DOMContentLoaded', function() {
+    const refreshButton = document.getElementById('refresh-button');
+    if (refreshButton) {
+        refreshButton.addEventListener('click', forceRefreshData);
+    }
+});

@@ -1,9 +1,30 @@
 .card {
-  background-color: var(--card-background);
-  border: 1px solid var(--card-border);
-  border-radius: 5px;
-  padding: 15px;
-  box-shadow: 0 4px 6px var(--box-shadow);
+  background: var(--card-background);
+  border: none;
+  border-radius: var(--border-radius);
+  padding: 1.5rem;
+  box-shadow: var(--box-shadow-card);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: var(--primary-gradient);
+  border-radius: var(--border-radius) var(--border-radius) 0 0;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--box-shadow-hover);
 }
 
 #item-0 {
@@ -11,13 +32,23 @@
   grid-column-start: 5;
   grid-row-end: 4;
   grid-column-end: 6;
-  padding: 15px;
+  padding: 1rem;
 }
 
 #item-0 h3 {
-  color: var(--h3-color);
-  font-size: 1.5em;
-  margin-bottom: 20px;
+  color: var(--text-primary);
+  font-family: var(--font-family);
+  font-weight: var(--font-weight-semibold);
+  font-size: 1.5rem;
+  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+#item-0 h3::before {
+  content: '🌀';
+  font-size: 1.2em;
 }
 
 #item-0 ul {
@@ -56,69 +87,198 @@
 }
 
 .basin-section {
-    margin-bottom: 20px;
-    padding: 15px;
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 8px;
-}
-
-.basin-section h3 {
-    color: #fff;
-    margin-bottom: 15px;
-    padding-bottom: 8px;
-    border-bottom: 2px solid rgba(255, 255, 255, 0.2);
-}
-
-.cyclone-item {
-    background: rgba(0, 0, 0, 0.2);
-    margin-bottom: 10px;
-    padding: 15px;
-    border-radius: 6px;
-    cursor: pointer;
+    margin-bottom: 1rem;
+    background: var(--white);
+    border-radius: var(--border-radius-small);
+    border: 1px solid var(--gray-200);
+    box-shadow: var(--box-shadow-card);
+    overflow: hidden;
     transition: all 0.3s ease;
 }
 
+.basin-section:hover {
+    box-shadow: var(--box-shadow-hover);
+}
+
+/* En-tête de l'accordéon */
+.basin-header {
+    padding: 1rem 1.25rem;
+    background: var(--gray-100);
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all 0.3s ease;
+    border-bottom: 1px solid var(--gray-200);
+}
+
+.basin-header:hover {
+    background: var(--gray-200);
+}
+
+.basin-header.active {
+    background: var(--accent-blue);
+    color: var(--white);
+}
+
+.basin-header.active .basin-title {
+    color: var(--white);
+}
+
+.basin-header.active .accordion-icon {
+    color: var(--white);
+    transform: rotate(180deg);
+}
+
+.basin-title {
+    color: var(--text-primary);
+    font-family: var(--font-family);
+    font-weight: var(--font-weight-semibold);
+    font-size: 1.1rem;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.basin-title::before {
+    content: '🌊';
+    font-size: 1.2em;
+}
+
+.accordion-icon {
+    color: var(--text-secondary);
+    font-size: 1.2rem;
+    transition: all 0.3s ease;
+    font-weight: bold;
+}
+
+/* Contenu de l'accordéon */
+.basin-content {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+    background: var(--white);
+}
+
+.basin-content.active {
+    max-height: 1000px; /* Valeur suffisamment grande */
+}
+
+.basin-content-inner {
+    padding: 1rem 1.25rem;
+}
+
+/* Styles pour les éléments de cyclone dans l'accordéon */
+.basin-content-inner ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.cyclone-item {
+    background: var(--white);
+    margin-bottom: 0.75rem;
+    padding: 1rem;
+    border-radius: var(--border-radius-small);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: 1px solid var(--gray-200);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    position: relative;
+    overflow: hidden;
+}
+
+.cyclone-item::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background: var(--accent-blue);
+    transform: scaleY(0);
+    transition: transform 0.3s ease;
+}
+
 .cyclone-item:hover {
-    background: rgba(0, 0, 0, 0.3);
-    transform: translateX(5px);
+    background: var(--gray-50);
+    transform: translateX(4px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.cyclone-item:hover::before {
+    transform: scaleY(1);
 }
 
 .cyclone-item.selected {
-    background: rgba(48, 161, 230, 0.3);
-    border-left: 4px solid #30a1e6;
+    background: var(--accent-blue);
+    color: var(--white);
+    border-color: var(--accent-blue);
+    transform: translateX(4px);
+    box-shadow: 0 4px 12px rgba(116, 185, 255, 0.3);
+}
+
+.cyclone-item.selected::before {
+    background: var(--white);
+    transform: scaleY(1);
 }
 
 .cyclone-item h4 {
-    color: #fff;
-    margin: 0 0 10px 0;
+    color: var(--text-primary);
+    font-family: var(--font-family);
+    font-weight: var(--font-weight-semibold);
+    margin: 0 0 0.75rem 0;
+    font-size: 1.1rem;
+}
+
+.cyclone-item.selected h4 {
+    color: var(--white);
 }
 
 .cyclone-details {
-    font-size: 0.9em;
-    color: rgba(255, 255, 255, 0.8);
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    font-family: var(--font-family);
+}
+
+.cyclone-item.selected .cyclone-details {
+    color: rgba(255, 255, 255, 0.9);
 }
 
 .cyclone-details p {
-    margin: 5px 0;
+    margin: 0.25rem 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.cyclone-details p::before {
+    content: '•';
+    color: var(--accent-blue);
+    font-weight: bold;
 }
 
 .source-tag, .invest-tag {
     display: inline-block;
-    padding: 2px 6px;
-    border-radius: 4px;
-    font-size: 0.8em;
-    margin-right: 5px;
-    margin-bottom: 5px;
+    padding: 0.25rem 0.5rem;
+    border-radius: var(--border-radius-small);
+    font-size: 0.75rem;
+    font-weight: var(--font-weight-medium);
+    margin-right: 0.5rem;
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
 .source-tag {
-    background: #2c3e50;
-    color: #fff;
+    background: var(--gray-600);
+    color: var(--white);
 }
 
 .invest-tag {
-    background: #e74c3c;
-    color: #fff;
+    background: var(--accent-red);
+    color: var(--white);
 }
 
 .no-storms {

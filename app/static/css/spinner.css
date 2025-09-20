@@ -1,0 +1,222 @@
+/* Spinner de chargement moderne */
+.loading-spinner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem 2rem;
+    color: var(--text-secondary);
+    background: var(--gray-100);
+    border-radius: var(--border-radius);
+    margin: 1rem 0;
+}
+
+.spinner {
+    width: 50px;
+    height: 50px;
+    border: 3px solid var(--gray-200);
+    border-top: 3px solid var(--accent-blue);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 1.5rem;
+    position: relative;
+}
+
+.spinner::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 20px;
+    height: 20px;
+    border: 2px solid transparent;
+    border-top: 2px solid var(--accent-orange);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    animation: spin 0.5s linear infinite reverse;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.loading-text {
+    font-size: 1.1rem;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+    font-family: var(--font-family);
+    font-weight: var(--font-weight-medium);
+}
+
+.loading-subtext {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    text-align: center;
+    font-family: var(--font-family);
+    max-width: 300px;
+    line-height: 1.4;
+}
+
+/* Animation de pulsation pour le texte */
+.loading-text {
+    animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+/* Spinner pour les cartes de cyclones */
+.cyclone-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    min-height: 100px;
+}
+
+.cyclone-spinner {
+    width: 30px;
+    height: 30px;
+    border: 3px solid #f3f3f3;
+    border-top: 3px solid #e74c3c;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+/* Masquer le spinner quand les données sont chargées */
+.loading-hidden {
+    display: none !important;
+}
+
+/* Animation de fade-in pour les données chargées */
+.data-loaded {
+    animation: fadeIn 0.5s ease-in;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Styles pour les messages d'erreur */
+.error-message {
+    text-align: center;
+    padding: 2rem;
+    color: #e74c3c;
+}
+
+.error-message p {
+    margin-bottom: 1rem;
+}
+
+.retry-button {
+    background-color: #3498db;
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: background-color 0.3s ease;
+}
+
+.retry-button:hover {
+    background-color: #2980b9;
+}
+
+.retry-button:active {
+    transform: translateY(1px);
+}
+
+/* Bouton de rafraîchissement */
+.refresh-button {
+    background: var(--white);
+    border: 2px solid var(--gray-200);
+    cursor: pointer;
+    padding: 0.75rem;
+    border-radius: 50%;
+    transition: all 0.3s ease;
+    margin-left: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: var(--box-shadow-card);
+    position: relative;
+    overflow: hidden;
+}
+
+.refresh-button::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: var(--accent-blue);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    z-index: -1;
+}
+
+.refresh-button:hover {
+    border-color: var(--accent-blue);
+    transform: translateY(-2px);
+    box-shadow: var(--box-shadow-hover);
+}
+
+.refresh-button:hover::before {
+    opacity: 1;
+}
+
+.refresh-button:hover .refresh-icon {
+    filter: brightness(0) saturate(100%) invert(100%) sepia(0%) saturate(0%) hue-rotate(0deg) brightness(100%) contrast(100%);
+    transform: rotate(180deg);
+}
+
+.refresh-button:active {
+    transform: translateY(0);
+}
+
+.refresh-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.refresh-button:disabled:hover {
+    border-color: var(--gray-200);
+    box-shadow: var(--box-shadow-card);
+}
+
+.refresh-button:disabled:hover::before {
+    opacity: 0;
+}
+
+.refresh-button:disabled:hover .refresh-icon {
+    filter: brightness(0) saturate(100%) invert(60%) sepia(0%) saturate(0%) hue-rotate(0deg) brightness(100%) contrast(100%);
+    transform: none;
+}
+
+/* Icône SVG de rafraîchissement */
+.refresh-icon {
+    width: 20px;
+    height: 20px;
+    filter: brightness(0) saturate(100%) invert(27%) sepia(51%) saturate(2878%) hue-rotate(346deg) brightness(104%) contrast(97%);
+    transition: all 0.3s ease;
+    z-index: 1;
+}
+
+/* Animation de rotation pour l'icône de chargement */
+.refresh-icon.loading {
+    animation: spin 1s linear infinite;
+}
+
+/* Style pour le titre avec bouton */
+.title {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}

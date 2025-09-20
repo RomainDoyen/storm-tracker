@@ -38,36 +38,9 @@ pip install -r requirements.txt
 - Générez un fichier de configuration d'administration (clé privée) :
   - Allez dans Paramètres du projet > Comptes de service
   - Cliquez sur "Générer une nouvelle clé privée"
-  - Sauvegardez les informations pour les variables d'environnement
+  - Téléchargez le fichier JSON et placez-le à la racine du projet
 
-4. Configurez les variables d'environnement
-
-Créez un fichier `.env` à la racine du projet avec les informations suivantes :
-
-```env
-# Firebase Configuration (Admin SDK)
-FIREBASE_TYPE=service_account
-FIREBASE_PROJECT_ID=votre-projet-id
-FIREBASE_PRIVATE_KEY_ID=votre-private-key-id
-FIREBASE_PRIVATE_KEY="votre-private-key"
-FIREBASE_CLIENT_EMAIL=votre-client-email
-FIREBASE_CLIENT_ID=votre-client-id
-FIREBASE_AUTH_URI=https://accounts.google.com/o/oauth2/auth
-FIREBASE_TOKEN_URI=https://oauth2.googleapis.com/token
-FIREBASE_AUTH_PROVIDER_X509_CERT_URL=https://www.googleapis.com/oauth2/v1/certs
-FIREBASE_CLIENT_X509_CERT_URL=votre-cert-url
-FIREBASE_UNIVERSE_DOMAIN=googleapis.com
-
-# Firebase Web Config
-FIREBASE_API_KEY=votre-api-key
-FIREBASE_AUTH_DOMAIN=votre-projet.firebaseapp.com
-FIREBASE_PROJECT_ID_WEB=votre-projet-id
-FIREBASE_STORAGE_BUCKET=votre-projet.appspot.com
-FIREBASE_MESSAGING_SENDER_ID=votre-sender-id
-FIREBASE_APP_ID=votre-app-id
-```
-
-5. Lancez l'application
+4. Lancez l'application
 
 ```bash
 python run.py

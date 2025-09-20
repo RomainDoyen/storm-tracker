@@ -5,8 +5,18 @@
         <div class="card">
             <div class="title">
                 <h3>Tempêtes actives</h3>
+                <button id="refresh-button" class="refresh-button" title="Actualiser les données">
+                    <img src="{{ url_for('static', filename='images/refresh-cw-alt-2-svgrepo-com.svg') }}" alt="Actualiser" class="refresh-icon">
+                </button>
             </div>
-            <div id="active-storms"></div>
+            <!-- Spinner de chargement -->
+            <div id="loading-spinner" class="loading-spinner">
+                <div class="spinner"></div>
+                <div class="loading-text">Chargement des données cyclones...</div>
+                <div class="loading-subtext">Récupération en cours depuis les sources météorologiques</div>
+            </div>
+            <!-- Contenu des cyclones -->
+            <div id="active-storms" class="loading-hidden"></div>
         </div>
     </div>
     <div id="item-1">

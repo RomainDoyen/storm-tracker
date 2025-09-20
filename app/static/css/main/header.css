@@ -1,7 +1,77 @@
 header {
   background: var(--header-background);
-  -webkit-backdrop-filter: blur(10px);
-  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
   border-bottom: 1px solid var(--header-border-bottom);
-  box-shadow: 0 4px 6px var(--box-shadow);
+  box-shadow: var(--box-shadow);
+  padding: 2rem 0;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+header::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--primary-gradient);
+  opacity: 0.1;
+  z-index: -1;
+}
+
+header h1 {
+  font-family: var(--font-family);
+  font-weight: var(--font-weight-bold);
+  font-size: 2.5rem;
+  color: var(--text-white);
+  margin: 0 0 1rem 0;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  letter-spacing: -0.02em;
+}
+
+header p {
+  font-family: var(--font-family);
+  font-weight: var(--font-weight-normal);
+  font-size: 1.1rem;
+  color: var(--text-white);
+  opacity: 0.9;
+  margin: 0;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+header img {
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
+  transition: transform 0.3s ease;
+  margin: 1rem 0;
+}
+
+header img:hover {
+  transform: scale(1.05) rotate(5deg);
+}
+
+/* Animation d'entrée */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+header h1 {
+  animation: fadeInUp 0.8s ease-out;
+}
+
+header p {
+  animation: fadeInUp 0.8s ease-out 0.2s both;
+}
+
+header img {
+  animation: fadeInUp 0.8s ease-out 0.4s both;
 }
