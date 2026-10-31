@@ -1,15 +1,17 @@
 import os
+import threading
 from pathlib import Path
 
 import psycopg
 from dotenv import load_dotenv
 from psycopg.conninfo import conninfo_to_dict, make_conninfo
-from psycopg_pool import ConnectionPool
 
 load_dotenv()
 
 _SCHEMA_PATH = Path(__file__).resolve().parents[1] / "db" / "migrations" / "001_cyclones.sql"
-_pool = None
+_lock = threading.Lock()
+_conninfo = None
+_ready = False
 
 _INSERT = """
 INSERT INTO cyclones (
@@ -55,74 +57,73 @@ def _to_api(row):
 
 
 def database_available():
-    return _pool is not None
+    return _ready or bool(os.getenv("DATABASE_URL"))
 
 
-def _conninfo(url, channel_binding):
-    """Le pooler Neon ne termine pas channel_binding=require : le client attend alors jusqu'au délai du pool."""
+def reset_after_fork():
+    """Le pool et ses fils ne survivent pas au fork de Gunicorn."""
+    global _lock, _conninfo, _ready
+    _lock = threading.Lock()
+    _conninfo = None
+    _ready = False
+
+
+def _conninfo_from(url, channel_binding):
     info = conninfo_to_dict(url)
     info["channel_binding"] = channel_binding
     info["sslmode"] = "require"
-    info["connect_timeout"] = "10"
+    info["connect_timeout"] = "15"
     info["gssencmode"] = "disable"
     return make_conninfo(**info)
 
 
-def _open_pool(conninfo):
-    pool = ConnectionPool(
-        conninfo=conninfo,
-        min_size=0,
-        max_size=4,
-        timeout=20,
-        kwargs={"prepare_threshold": None},
-        open=True,
-    )
-    try:
-        with pool.connection(timeout=15) as conn:
-            conn.execute("SELECT 1")
-        return pool
-    except Exception as error:
-        print(f"⚠️  connexion refusée : {type(error).__name__}")
-        pool.close()
-        return None
-
-
-def init_database():
-    """Crée la table via la connexion directe, puis ouvre un pool."""
-    global _pool
-    if _pool is not None:
-        return True
-
+def _candidates():
     pooled = os.getenv("DATABASE_URL")
     direct = os.getenv("DATABASE_URL_UNPOOLED")
-    if not pooled or not direct:
-        print("⚠️  DATABASE_URL absent")
+    found = []
+    if pooled:
+        found.append(("pooler", _conninfo_from(pooled, "disable")))
+    if direct:
+        found.append(("direct", _conninfo_from(direct, "prefer")))
+    return found
+
+
+def ensure_database():
+    """Ouvre une connexion neuve pour choisir une URL, puis crée la table."""
+    global _conninfo, _ready
+    if _ready and _conninfo:
+        return True
+    with _lock:
+        if _ready and _conninfo:
+            return True
+        candidates = _candidates()
+        if not candidates:
+            print("⚠️  DATABASE_URL absent")
+            return False
+        schema = _SCHEMA_PATH.read_text(encoding="utf-8")
+        for label, info in candidates:
+            try:
+                with psycopg.connect(info, autocommit=True, prepare_threshold=None) as conn:
+                    conn.execute(schema)
+                _conninfo = info
+                _ready = True
+                print(f"✅ Neon Postgres prêt ({label})")
+                return True
+            except Exception as error:
+                print(f"⚠️  {label} refusé : {type(error).__name__}")
         return False
 
-    try:
-        schema = _SCHEMA_PATH.read_text(encoding="utf-8")
-        direct_info = _conninfo(direct, "prefer")
-        with psycopg.connect(direct_info, autocommit=True, prepare_threshold=None) as conn:
-            conn.execute(schema)
-        _pool = _open_pool(_conninfo(pooled, "disable"))
-        if _pool is None:
-            print("⚠️  pooler indisponible, connexion directe")
-            _pool = _open_pool(direct_info)
-        if _pool is None:
-            print("⚠️  Neon indisponible")
-            return False
-        print("✅ Neon Postgres prêt")
-        return True
-    except Exception as error:
-        _pool = None
-        print(f"⚠️  Neon indisponible : {type(error).__name__}")
-        return False
+
+def _connect():
+    if not ensure_database():
+        raise RuntimeError("Neon indisponible")
+    return psycopg.connect(_conninfo, prepare_threshold=None)
 
 
 def list_cyclones():
-    if _pool is None:
+    if not ensure_database():
         return []
-    with _pool.connection() as conn:
+    with _connect() as conn:
         rows = conn.execute(
             """
             SELECT id_cyclone, name, vmax, mslp, lat, lon,
@@ -136,16 +137,13 @@ def list_cyclones():
 
 def replace_cyclones(storms):
     """Remplace tout le stock dans une seule transaction."""
-    if _pool is None:
+    if not ensure_database():
         return False
     records = [_record(storm) for storm in storms]
-    with _pool.connection() as conn:
+    with _connect() as conn:
         with conn.transaction():
             conn.execute("DELETE FROM cyclones")
             if records:
                 with conn.cursor() as cur:
                     cur.executemany(_INSERT, records)
     return True
-
-
-init_database()

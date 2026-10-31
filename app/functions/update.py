@@ -114,12 +114,20 @@ def update_cyclones_data():
         time.sleep(UPDATE_INTERVAL)
 
 
+def reset_after_fork():
+    """Le fil lancé avant le fork de Gunicorn ne tourne plus dans le worker."""
+    global _updater_started
+    _updater_started = False
+    data_cache['is_updating'] = False
+    data_cache['data'] = None
+    data_cache['last_update'] = None
+
+
 def start_background_updates():
     global _updater_started
     if _updater_started:
         return
     _updater_started = True
-    data_cache['is_updating'] = True
     thread = threading.Thread(target=update_cyclones_data, daemon=True)
     thread.start()
 

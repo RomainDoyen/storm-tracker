@@ -215,9 +215,18 @@ async function waitForCurrentData() {
         const statusResponse = await fetch('/status');
         const dataResponse = await fetch('/cyclones-data');
         const status = statusResponse.ok ? await statusResponse.json() : { is_updating: false };
-        const payload = await dataResponse.json();
+        let payload = null;
+        try {
+            payload = await dataResponse.json();
+        } catch (error) {
+            payload = null;
+        }
         if (!dataResponse.ok || !Array.isArray(payload)) {
-            throw new Error(payload.error || 'Réponse invalide');
+            if (status.is_updating) {
+                await new Promise((resolve) => setTimeout(resolve, 1500));
+                continue;
+            }
+            throw new Error((payload && payload.error) || 'Réponse invalide');
         }
         latest = payload;
         if (!status.is_updating) {
