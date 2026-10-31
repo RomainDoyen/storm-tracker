@@ -3,6 +3,7 @@ from pathlib import Path
 
 import psycopg
 from dotenv import load_dotenv
+from psycopg.conninfo import conninfo_to_dict, make_conninfo
 from psycopg_pool import ConnectionPool
 
 load_dotenv()
@@ -57,8 +58,37 @@ def database_available():
     return _pool is not None
 
 
+def _conninfo(url, channel_binding):
+    """Le pooler Neon ne termine pas channel_binding=require : le client attend alors jusqu'au délai du pool."""
+    info = conninfo_to_dict(url)
+    info["channel_binding"] = channel_binding
+    info["sslmode"] = "require"
+    info["connect_timeout"] = "10"
+    info["gssencmode"] = "disable"
+    return make_conninfo(**info)
+
+
+def _open_pool(conninfo):
+    pool = ConnectionPool(
+        conninfo=conninfo,
+        min_size=0,
+        max_size=4,
+        timeout=20,
+        kwargs={"prepare_threshold": None},
+        open=True,
+    )
+    try:
+        with pool.connection(timeout=15) as conn:
+            conn.execute("SELECT 1")
+        return pool
+    except Exception as error:
+        print(f"⚠️  connexion refusée : {type(error).__name__}")
+        pool.close()
+        return None
+
+
 def init_database():
-    """Crée la table via la connexion directe, puis ouvre un pool sur l'URL mutualisée."""
+    """Crée la table via la connexion directe, puis ouvre un pool."""
     global _pool
     if _pool is not None:
         return True
@@ -71,15 +101,16 @@ def init_database():
 
     try:
         schema = _SCHEMA_PATH.read_text(encoding="utf-8")
-        with psycopg.connect(direct, autocommit=True, prepare_threshold=None) as conn:
+        direct_info = _conninfo(direct, "prefer")
+        with psycopg.connect(direct_info, autocommit=True, prepare_threshold=None) as conn:
             conn.execute(schema)
-        _pool = ConnectionPool(
-            conninfo=pooled,
-            min_size=0,
-            max_size=4,
-            kwargs={"prepare_threshold": None},
-            open=True,
-        )
+        _pool = _open_pool(_conninfo(pooled, "disable"))
+        if _pool is None:
+            print("⚠️  pooler indisponible, connexion directe")
+            _pool = _open_pool(direct_info)
+        if _pool is None:
+            print("⚠️  Neon indisponible")
+            return False
         print("✅ Neon Postgres prêt")
         return True
     except Exception as error:
