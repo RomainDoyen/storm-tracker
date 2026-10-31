@@ -3,7 +3,7 @@ import datetime
 from flask import jsonify, render_template
 
 from app import app
-from app.db import database_available, list_cyclones
+from app.db import DatabaseBusy, database_available, list_cyclones
 from app.functions.update import get_cached_data, run_live_update, update_in_progress
 
 
@@ -30,6 +30,8 @@ def cyclones_data():
         if database_available():
             return jsonify(list_cyclones())
         return jsonify([])
+    except DatabaseBusy as e:
+        return jsonify({"error": str(e)}), 503
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 

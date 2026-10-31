@@ -68,11 +68,15 @@ def reset_after_fork():
     _ready = False
 
 
-def _conninfo_from(url, channel_binding):
+class DatabaseBusy(Exception):
+    """Une autre opération tient déjà la première connexion."""
+
+
+def _conninfo_from(url, channel_binding, timeout):
     info = conninfo_to_dict(url)
     info["channel_binding"] = channel_binding
     info["sslmode"] = "require"
-    info["connect_timeout"] = "15"
+    info["connect_timeout"] = str(timeout)
     info["gssencmode"] = "disable"
     return make_conninfo(**info)
 
@@ -82,18 +86,25 @@ def _candidates():
     direct = os.getenv("DATABASE_URL_UNPOOLED")
     found = []
     if pooled:
-        found.append(("pooler", _conninfo_from(pooled, "disable")))
+        found.append(("pooler", _conninfo_from(pooled, "disable", 8)))
     if direct:
-        found.append(("direct", _conninfo_from(direct, "prefer")))
+        found.append(("direct", _conninfo_from(direct, "prefer", 5)))
     return found
 
 
-def ensure_database():
-    """Ouvre une connexion neuve pour choisir une URL, puis crée la table."""
+def ensure_database(wait=True):
+    """Ouvre une connexion neuve pour choisir une URL, puis crée la table.
+
+    wait=False rend la main tout de suite si le fil de démarrage tient déjà
+    le verrou, pour qu'une requête HTTP ne bloque pas le worker.
+    """
     global _conninfo, _ready
     if _ready and _conninfo:
         return True
-    with _lock:
+    acquired = _lock.acquire(blocking=wait)
+    if not acquired:
+        return False
+    try:
         if _ready and _conninfo:
             return True
         candidates = _candidates()
@@ -112,6 +123,8 @@ def ensure_database():
             except Exception as error:
                 print(f"⚠️  {label} refusé : {type(error).__name__}")
         return False
+    finally:
+        _lock.release()
 
 
 def _connect():
@@ -121,8 +134,12 @@ def _connect():
 
 
 def list_cyclones():
-    if not ensure_database():
-        return []
+    if not ensure_database(wait=False):
+        if not (_ready and _conninfo):
+            if _lock.acquire(blocking=False):
+                _lock.release()
+                raise RuntimeError("Neon indisponible")
+            raise DatabaseBusy("Neon en cours de connexion")
     with _connect() as conn:
         rows = conn.execute(
             """

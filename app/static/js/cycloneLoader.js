@@ -210,11 +210,20 @@ function scheduleRefreshWhenIdle() {
 async function waitForCurrentData() {
     const deadline = Date.now() + UPDATE_WAIT_MS;
     let latest = null;
+    let lastError = 'Réponse invalide';
 
     while (Date.now() < deadline) {
-        const statusResponse = await fetch('/status');
-        const dataResponse = await fetch('/cyclones-data');
-        const status = statusResponse.ok ? await statusResponse.json() : { is_updating: false };
+        let statusResponse;
+        let dataResponse;
+        try {
+            statusResponse = await fetch('/status');
+            dataResponse = await fetch('/cyclones-data');
+        } catch (error) {
+            lastError = 'Service en cours de réveil';
+            await new Promise((resolve) => setTimeout(resolve, 1500));
+            continue;
+        }
+        const status = statusResponse.ok ? await statusResponse.json() : { is_updating: true };
         let payload = null;
         try {
             payload = await dataResponse.json();
@@ -222,11 +231,9 @@ async function waitForCurrentData() {
             payload = null;
         }
         if (!dataResponse.ok || !Array.isArray(payload)) {
-            if (status.is_updating) {
-                await new Promise((resolve) => setTimeout(resolve, 1500));
-                continue;
-            }
-            throw new Error((payload && payload.error) || 'Réponse invalide');
+            lastError = (payload && payload.error) || 'Réponse invalide';
+            await new Promise((resolve) => setTimeout(resolve, 1500));
+            continue;
         }
         latest = payload;
         if (!status.is_updating) {
@@ -242,7 +249,7 @@ async function waitForCurrentData() {
     if (latest) {
         return latest;
     }
-    throw new Error('Réponse invalide');
+    throw new Error(lastError);
 }
 
 export async function loadCyclones(map) {

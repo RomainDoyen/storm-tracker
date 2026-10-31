@@ -108,6 +108,7 @@ def initialize_cache_from_database():
 
 def update_cyclones_data():
     """Met à jour les cyclones au démarrage, puis toutes les 30 minutes."""
+    data_cache['is_updating'] = True
     initialize_cache_from_database()
     while True:
         run_live_update()
