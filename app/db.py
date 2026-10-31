@@ -86,10 +86,31 @@ def _candidates():
     direct = os.getenv("DATABASE_URL_UNPOOLED")
     found = []
     if pooled:
-        found.append(("pooler", _conninfo_from(pooled, "disable", 8)))
+        # Le pooler est joignable en IPv4. L'hôte direct est souvent uniquement en IPv6.
+        found.append(("pooler", _conninfo_from(pooled, "disable", 15), 18))
     if direct:
-        found.append(("direct", _conninfo_from(direct, "prefer", 5)))
+        found.append(("direct", _conninfo_from(direct, "prefer", 5), 6))
     return found
+
+
+def _open_connection(info, timeout, **kwargs):
+    """Coupe l'attente même si libpq ignore connect_timeout."""
+    outcome = {}
+
+    def attempt():
+        try:
+            outcome["conn"] = psycopg.connect(info, **kwargs)
+        except Exception as exc:
+            outcome["error"] = exc
+
+    worker = threading.Thread(target=attempt, daemon=True)
+    worker.start()
+    worker.join(timeout)
+    if worker.is_alive():
+        raise TimeoutError("délai de connexion")
+    if "error" in outcome:
+        raise outcome["error"]
+    return outcome["conn"]
 
 
 def ensure_database(wait=True):
@@ -112,16 +133,29 @@ def ensure_database(wait=True):
             print("⚠️  DATABASE_URL absent")
             return False
         schema = _SCHEMA_PATH.read_text(encoding="utf-8")
-        for label, info in candidates:
+        for label, info, timeout in candidates:
+            conn = None
             try:
-                with psycopg.connect(info, autocommit=True, prepare_threshold=None) as conn:
-                    conn.execute(schema)
+                conn = _open_connection(
+                    info,
+                    timeout,
+                    autocommit=True,
+                    prepare_threshold=None,
+                )
+                conn.execute(schema)
                 _conninfo = info
                 _ready = True
                 print(f"✅ Neon Postgres prêt ({label})")
                 return True
+            except TimeoutError:
+                print(f"⚠️  {label} délai dépassé")
+                if label == "pooler":
+                    break
             except Exception as error:
                 print(f"⚠️  {label} refusé : {type(error).__name__}")
+            finally:
+                if conn is not None:
+                    conn.close()
         return False
     finally:
         _lock.release()
@@ -130,7 +164,7 @@ def ensure_database(wait=True):
 def _connect():
     if not ensure_database():
         raise RuntimeError("Neon indisponible")
-    return psycopg.connect(_conninfo, prepare_threshold=None)
+    return _open_connection(_conninfo, 10, prepare_threshold=None)
 
 
 def list_cyclones():
