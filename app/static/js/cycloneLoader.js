@@ -1,8 +1,8 @@
 import getIconUrl from '../data/classification.js';
-import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
 
 // Variable globale pour stocker la référence de la carte
 let globalMap = null;
+const UPDATE_WAIT_MS = 240000;
 
 var cycloneMarkers = {};
 var haloLayer = null;
@@ -29,35 +29,52 @@ function groupCyclonesByBasin(cyclones) {
     return groups;
 }
 
+function escapeHtml(value) {
+    return String(value ?? '').replace(/[&<>"']/g, (ch) => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;'
+    }[ch]));
+}
+
+function showPlotName(name) {
+    const plotName = document.getElementById('plot-name');
+    if (!plotName) return;
+    plotName.textContent = name || 'Tempêtes actives';
+    plotName.classList.toggle('is-storm', Boolean(name));
+}
+
 function createBasinSection(basinName, cyclones) {
     if (cyclones.length === 0) return '';
 
     const basinId = basinName.toLowerCase().replace(/\s+/g, '-');
-    const isFirstSection = basinName === 'Atlantique Nord'; // Ouvrir le premier accordéon par défaut
+    const chevron = '<svg class="chevron" viewBox="0 0 12 12" aria-hidden="true"><path d="M2.2 4.2 6 8l3.8-3.8" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="square"/></svg>';
 
     let html = `<div class="basin-section" data-basin="${basinId}">
-        <div class="basin-header ${isFirstSection ? 'active' : ''}" onclick="toggleAccordion('${basinId}')">
-            <h3 class="basin-title">${basinName} (${cyclones.length})</h3>
-            <span class="accordion-icon">▼</span>
-        </div>
-        <div class="basin-content ${isFirstSection ? 'active' : ''}">
+        <button type="button" class="basin-header active" aria-expanded="true" onclick="toggleAccordion('${basinId}')">
+            <h2 class="basin-title">${escapeHtml(basinName)} (${cyclones.length})</h2>
+            <span class="accordion-icon">${chevron}</span>
+        </button>
+        <div class="basin-content active">
             <div class="basin-content-inner">
+                <div class="fix-columns" aria-hidden="true"><span>Nom</span><span>Vent</span><span>Pression</span></div>
                 <ul>`;
 
     cyclones.forEach(cyclone => {
-        const sourceTag = cyclone.source ? `<span class="source-tag">${cyclone.source.toUpperCase()}</span>` : '';
-        const investTag = cyclone.is_invest ? '<span class="invest-tag">INVEST</span>' : '';
-        
+        const sourceTag = cyclone.source ? `<span class="source-tag">${escapeHtml(cyclone.source.toUpperCase())}</span>` : '';
+        const investTag = cyclone.is_invest ? '<span class="invest-tag">Invest</span>' : '';
+
         html += `
-            <li id="cyclone-${cyclone.idCyclone}" class="cyclone-item">
-                <h4>${cyclone.name} (${cyclone.idCyclone})</h4>
+            <li id="cyclone-${escapeHtml(cyclone.idCyclone)}" class="cyclone-item" tabindex="0">
+                <h3 class="fix-name"><span class="fix-title">${escapeHtml(cyclone.name)}</span><span class="fix-id">${escapeHtml(cyclone.idCyclone)}</span></h3>
                 <div class="cyclone-details">
-                    ${sourceTag}
-                    ${investTag}
-                    <p>Classification: ${cyclone.classification}</p>
-                    <p>Vents max: ${cyclone.vmax} km/h</p>
-                    <p>Pression: ${cyclone.mslp} bar</p>
-                    <p>Dernière mise à jour: ${cyclone.last_update || 'N/A'}</p>
+                    <p class="fix-class">${escapeHtml(cyclone.classification)}</p>
+                    <p class="fix-wind"><span class="num">${escapeHtml(cyclone.vmax)}</span> <span class="unit">km/h</span></p>
+                    <p class="fix-pressure"><span class="num">${escapeHtml(cyclone.mslp)}</span> <span class="unit">bar</span></p>
+                    <div class="fix-meta">${sourceTag}${investTag}</div>
+                    <p class="fix-time">${escapeHtml(cyclone.last_update || 'N/A')}</p>
                 </div>
             </li>`;
     });
@@ -69,81 +86,206 @@ function createBasinSection(basinName, cyclones) {
     return html;
 }
 
-export async function loadCyclones(map) {
-    globalMap = map; // Stocker la référence de la carte
+function setLoading(isLoading) {
     const loadingSpinner = document.getElementById('loading-spinner');
     const activeStorms = document.getElementById('active-storms');
-    
-    try {
-        // Afficher le spinner
-        loadingSpinner.classList.remove('loading-hidden');
-        activeStorms.classList.add('loading-hidden');
-        
-        const db = getFirestore();
-        const cyclonesRef = collection(db, "Cyclones");
-        const snapshot = await getDocs(cyclonesRef);
-        const cyclones = snapshot.docs.map(doc => doc.data());
+    const mapLoading = document.getElementById('map-loading');
+    loadingSpinner.classList.toggle('loading-hidden', !isLoading);
+    activeStorms.classList.toggle('loading-hidden', isLoading);
+    if (mapLoading) {
+        mapLoading.classList.toggle('loading-hidden', !isLoading);
+    }
+}
 
-        // Masquer le spinner et afficher les données
-        loadingSpinner.classList.add('loading-hidden');
-        activeStorms.classList.remove('loading-hidden');
-        activeStorms.classList.add('data-loaded');
-        
-        if (cyclones.length === 0) {
-            activeStorms.innerHTML = '<p class="no-storms">Aucun cyclone actif actuellement.</p>';
-            return;
+function showLoading() {
+    setLoading(true);
+}
+
+function showStormError(message) {
+    const activeStorms = document.getElementById('active-storms');
+    setLoading(false);
+    activeStorms.innerHTML =
+        '<div class="error-message">' +
+        '<p>' + escapeHtml(message) + '</p>' +
+        '<p>Vérifiez la connexion, puis relancez la lecture.</p>' +
+        '<button type="button" onclick="location.reload()" class="retry-button">Réessayer</button>' +
+        '</div>';
+}
+
+function clearStormLayers(map) {
+    Object.keys(cycloneMarkers).forEach((id) => {
+        map.removeLayer(cycloneMarkers[id]);
+        delete cycloneMarkers[id];
+    });
+    if (haloLayer) {
+        map.removeLayer(haloLayer);
+        haloLayer = null;
+    }
+}
+
+function renderCyclones(map, cyclones) {
+    const activeStorms = document.getElementById('active-storms');
+
+    clearStormLayers(map);
+    showPlotName(null);
+    setLoading(false);
+    activeStorms.classList.add('data-loaded');
+
+    if (!cyclones.length) {
+        activeStorms.innerHTML = '<p class="no-storms">Aucun cyclone actif actuellement.</p>';
+        return;
+    }
+
+    const groupedCyclones = groupCyclonesByBasin(cyclones);
+    let html = '';
+    Object.entries(groupedCyclones).forEach(([basin, data]) => {
+        if (data.cyclones.length > 0) {
+            html += createBasinSection(data.name, data.cyclones);
         }
+    });
+    activeStorms.innerHTML = html;
 
-        const groupedCyclones = groupCyclonesByBasin(cyclones);
-        let html = '';
+    cyclones.forEach((cyclone) => {
+        var customIcon = L.icon({
+            iconUrl: getIconUrl(cyclone.classification),
+            iconSize: [50, 50],
+            iconAnchor: [25, 25],
+            tooltipAnchor: [0, -26]
+        });
 
-        // Créer les sections pour chaque bassin
-        Object.entries(groupedCyclones).forEach(([basin, data]) => {
-            if (data.cyclones.length > 0) {
-                html += createBasinSection(data.name, data.cyclones);
+        var marker = L.marker([cyclone.lat, cyclone.lon], { icon: customIcon })
+            .bindTooltip(escapeHtml(cyclone.name), {
+                permanent: true,
+                direction: 'top',
+                className: 'storm-label',
+                opacity: 1
+            })
+            .bindPopup(`
+                <div class="popup-content">
+                    <h3>${escapeHtml(cyclone.name)}</h3>
+                    <p><strong>Identifiant</strong> ${escapeHtml(cyclone.idCyclone)}</p>
+                    <p><strong>Source</strong> ${escapeHtml(cyclone.source ? cyclone.source.toUpperCase() : 'N/A')}</p>
+                    <p><strong>Classe</strong> ${escapeHtml(cyclone.classification)}</p>
+                    <p><strong>Vent</strong> ${escapeHtml(cyclone.vmax)} km/h</p>
+                    <p><strong>Pression</strong> ${escapeHtml(cyclone.mslp)} bar</p>
+                    <p><strong>Bassin</strong> ${escapeHtml(groupedCyclones[cyclone.basin]?.name || 'Inconnu')}</p>
+                    <p><strong>Relevé</strong> ${escapeHtml(cyclone.last_update || 'N/A')}</p>
+                </div>
+            `)
+            .addTo(map);
+
+        cycloneMarkers[cyclone.idCyclone] = marker;
+    });
+
+    attachCycloneEvents(cyclones, map);
+}
+
+function scheduleRefreshWhenIdle() {
+    if (scheduleRefreshWhenIdle.timer) {
+        return;
+    }
+    scheduleRefreshWhenIdle.timer = setInterval(async () => {
+        try {
+            const statusResponse = await fetch('/status');
+            if (!statusResponse.ok) {
+                return;
             }
-        });
+            const status = await statusResponse.json();
+            if (status.is_updating || !globalMap) {
+                return;
+            }
+            clearInterval(scheduleRefreshWhenIdle.timer);
+            scheduleRefreshWhenIdle.timer = null;
+            const response = await fetch('/cyclones-data');
+            const payload = await response.json();
+            if (Array.isArray(payload)) {
+                renderCyclones(globalMap, payload);
+            }
+        } catch (error) {
+            console.error('Erreur lors de la mise à jour automatique:', error);
+        }
+    }, 3000);
+}
 
-        activeStorms.innerHTML = html;
+async function waitForCurrentData() {
+    const deadline = Date.now() + UPDATE_WAIT_MS;
+    let latest = null;
 
-        // Ajouter les marqueurs sur la carte
-        cyclones.forEach((cyclone, index) => {
-            var customIcon = L.icon({
-                iconUrl: getIconUrl(cyclone.classification),
-                iconSize: [50, 50]
-            });
+    while (Date.now() < deadline) {
+        const statusResponse = await fetch('/status');
+        const dataResponse = await fetch('/cyclones-data');
+        const status = statusResponse.ok ? await statusResponse.json() : { is_updating: false };
+        const payload = await dataResponse.json();
+        if (!dataResponse.ok || !Array.isArray(payload)) {
+            throw new Error(payload.error || 'Réponse invalide');
+        }
+        latest = payload;
+        if (!status.is_updating) {
+            return payload;
+        }
+        if (payload.length) {
+            scheduleRefreshWhenIdle();
+            return payload;
+        }
+        await new Promise((resolve) => setTimeout(resolve, 1500));
+    }
 
-            var marker = L.marker([cyclone.lat, cyclone.lon], { icon: customIcon })
-                .bindPopup(`
-                    <div class="popup-content">
-                        <h3>${cyclone.name} (${cyclone.idCyclone})</h3>
-                        <p><strong>Source:</strong> ${cyclone.source ? cyclone.source.toUpperCase() : 'N/A'}</p>
-                        <p><strong>Classification:</strong> ${cyclone.classification}</p>
-                        <p><strong>Vents max:</strong> ${cyclone.vmax} km/h</p>
-                        <p><strong>Pression:</strong> ${cyclone.mslp} bar</p>
-                        <p><strong>Bassin:</strong> ${groupedCyclones[cyclone.basin]?.name || 'Inconnu'}</p>
-                        <p><strong>Dernière mise à jour:</strong> ${cyclone.last_update || 'N/A'}</p>
-                    </div>
-                `)
-                .addTo(map);
+    if (latest) {
+        return latest;
+    }
+    throw new Error('Réponse invalide');
+}
 
-            cycloneMarkers[cyclone.idCyclone] = marker;
-        });
+export async function loadCyclones(map) {
+    globalMap = map;
+    showLoading();
 
-        attachCycloneEvents(cyclones, map);
+    try {
+        renderCyclones(map, await waitForCurrentData());
     } catch (error) {
         console.error('Erreur lors du chargement des cyclones:', error);
-        
-        // Masquer le spinner et afficher l'erreur
-        loadingSpinner.classList.add('loading-hidden');
-        activeStorms.classList.remove('loading-hidden');
-        activeStorms.innerHTML = 
-            '<div class="error-message">' +
-            '<p>❌ Erreur lors du chargement des données</p>' +
-            '<p>Veuillez réessayer plus tard ou vérifier votre connexion.</p>' +
-            '<button onclick="location.reload()" class="retry-button">🔄 Réessayer</button>' +
-            '</div>';
+        showStormError('Erreur lors du chargement des données');
     }
+}
+
+function focusStorm(map, latlng) {
+    const zoom = 4;
+    const narrow = window.matchMedia('(max-width: 860px)').matches;
+    const panel = document.querySelector('.panel');
+    const point = map.project(latlng, zoom);
+    if (panel) {
+        const box = panel.getBoundingClientRect();
+        if (narrow) {
+            point.y += box.height / 2;
+        } else {
+            point.x -= (box.width + 20) / 2;
+        }
+    }
+    map.setView(map.unproject(point, zoom), zoom, { animate: true });
+}
+
+function selectCyclone(cyclone, listItem, map) {
+    if (haloLayer) {
+        map.removeLayer(haloLayer);
+        haloLayer = null;
+    }
+
+    focusStorm(map, [cyclone.lat, cyclone.lon]);
+
+    haloLayer = L.circle([cyclone.lat, cyclone.lon], {
+        color: '#c5342a',
+        weight: 1.5,
+        fillColor: '#c5342a',
+        fillOpacity: 0.07,
+        radius: 280000
+    }).addTo(map);
+    haloLayer.bringToBack();
+
+    document.querySelectorAll('.cyclone-item').forEach(item => {
+        item.classList.remove('selected');
+    });
+    listItem.classList.add('selected');
+    showPlotName(cyclone.name);
 }
 
 function attachCycloneEvents(cyclones, map) {
@@ -151,44 +293,29 @@ function attachCycloneEvents(cyclones, map) {
         var listItem = document.getElementById(`cyclone-${cyclone.idCyclone}`);
         if (!listItem) return;
 
-        listItem.addEventListener('click', function() {
-            // Supprimer le halo précédent s'il existe
-            if (haloLayer) {
-                map.removeLayer(haloLayer);
-                haloLayer = null;
+        const choose = () => selectCyclone(cyclone, listItem, map);
+        listItem.addEventListener('click', choose);
+        listItem.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                choose();
             }
-
-            // Centrer la carte sur le cyclone
-            map.setView([cyclone.lat, cyclone.lon], 4);
-
-            // Créer un nouveau halo
-            haloLayer = L.circle([cyclone.lat, cyclone.lon], {
-                color: 'blue',
-                fillColor: '#30a1e6',
-                fillOpacity: 0.5,
-                radius: 300000
-            }).addTo(map);
-
-            // Mettre à jour les classes CSS
-            document.querySelectorAll('.cyclone-item').forEach(item => {
-                item.classList.remove('selected');
-            });
-            listItem.classList.add('selected');
         });
+
+        const marker = cycloneMarkers[cyclone.idCyclone];
+        if (marker) {
+            marker.on('click', choose);
+        }
     });
 }
 
 // Fonction pour forcer la mise à jour des données
 async function forceRefreshData() {
     const refreshButton = document.getElementById('refresh-button');
-    const originalText = refreshButton.innerHTML;
-    
+
     try {
-        // Désactiver le bouton et afficher un spinner
         refreshButton.disabled = true;
-        refreshButton.innerHTML = `
-            <img src="/static/images/refresh-cw-alt-2-svgrepo-com.svg" alt="Actualiser" class="refresh-icon loading">
-        `;
+        showLoading();
         
         // Appeler l'API pour forcer la mise à jour
         const response = await fetch('/force-update', {
@@ -200,22 +327,19 @@ async function forceRefreshData() {
         
         const result = await response.json();
         
-        if (result.status === 'success') {
-            // Attendre un peu puis recharger les données
-            setTimeout(async () => {
-                if (globalMap) {
-                    await loadCyclones(globalMap);
-                }
-            }, 2000);
+        if (response.ok && result.status === 'success' && Array.isArray(result.cyclones)) {
+            if (globalMap) {
+                renderCyclones(globalMap, result.cyclones);
+            }
         } else {
             console.error('Erreur lors de la mise à jour:', result.message);
+            showStormError(result.message || 'Erreur lors de la mise à jour');
         }
     } catch (error) {
         console.error('Erreur lors de la mise à jour:', error);
+        showStormError('Erreur lors de la mise à jour');
     } finally {
-        // Réactiver le bouton
         refreshButton.disabled = false;
-        refreshButton.innerHTML = originalText;
     }
 }
 
@@ -230,16 +354,11 @@ window.toggleAccordion = function(basinId) {
 
     const isActive = header.classList.contains('active');
 
-    if (isActive) {
-        // Fermer l'accordéon
-        header.classList.remove('active');
-        content.classList.remove('active');
-        icon.style.transform = 'rotate(0deg)';
-    } else {
-        // Ouvrir l'accordéon
-        header.classList.add('active');
-        content.classList.add('active');
-        icon.style.transform = 'rotate(180deg)';
+    header.classList.toggle('active', !isActive);
+    header.setAttribute('aria-expanded', String(!isActive));
+    content.classList.toggle('active', !isActive);
+    if (icon) {
+        icon.style.transform = '';
     }
 };
 
@@ -250,3 +369,23 @@ document.addEventListener('DOMContentLoaded', function() {
         refreshButton.addEventListener('click', forceRefreshData);
     }
 });
+
+setInterval(async () => {
+    const refreshButton = document.getElementById('refresh-button');
+    if (!globalMap || (refreshButton && refreshButton.disabled)) {
+        return;
+    }
+    try {
+        const statusResponse = await fetch('/status');
+        if (!statusResponse.ok || (await statusResponse.json()).is_updating) {
+            return;
+        }
+        const response = await fetch('/cyclones-data');
+        const payload = await response.json();
+        if (Array.isArray(payload)) {
+            renderCyclones(globalMap, payload);
+        }
+    } catch (error) {
+        console.error('Erreur lors du rafraîchissement périodique:', error);
+    }
+}, 10 * 60 * 1000);

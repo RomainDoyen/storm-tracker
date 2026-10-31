@@ -1,72 +1,59 @@
-from flask import render_template, jsonify, request
-from app import app
 import datetime
-import os
-import threading
-from app.firebase_init import db
-from app.functions.update import force_update_cyclones_data, get_cached_data
-from dotenv import load_dotenv
 
-load_dotenv()
+from flask import jsonify, render_template
+
+from app import app
+from app.db import database_available, list_cyclones
+from app.functions.update import get_cached_data, run_live_update, update_in_progress
+
 
 @app.route('/')
 @app.route('/index')
 def index():
     title_site = {'title': 'Traqueur de Tempêtes'}
     year = datetime.date.today().year
-    
-    # Configuration Firebase pour le template
-    firebase_config = {
-        'api_key': os.getenv('FIREBASE_API_KEY'),
-        'auth_domain': os.getenv('FIREBASE_AUTH_DOMAIN'),
-        'project_id': os.getenv('FIREBASE_PROJECT_ID_WEB'),
-        'storage_bucket': os.getenv('FIREBASE_STORAGE_BUCKET'),
-        'messaging_sender_id': os.getenv('FIREBASE_MESSAGING_SENDER_ID'),
-        'app_id': os.getenv('FIREBASE_APP_ID')
-    }
-    
-    return render_template('index.html', 
-                          title='Accueil', 
-                          title_site=title_site, 
-                          year=year,
-                          firebase_config=firebase_config)
+    return render_template(
+        'index.html',
+        title='Accueil',
+        title_site=title_site,
+        year=year,
+    )
+
 
 @app.route('/cyclones-data')
 def cyclones_data():
     try:
-        # Essayer d'abord le cache
         cached_data = get_cached_data()
-        if cached_data:
+        if cached_data is not None:
             return jsonify(cached_data)
-        
-        # Sinon, récupérer depuis Firebase
-        if db:
-            cyclones_ref = db.collection("Cyclones")
-            cyclones = [doc.to_dict() for doc in cyclones_ref.stream()]
-            return jsonify(cyclones)
-        else:
-            return jsonify({"error": "Firebase non disponible"}), 503
+
+        if database_available():
+            return jsonify(list_cyclones())
+        return jsonify([])
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+
 @app.route('/force-update', methods=['POST'])
 def force_update():
-    """Force une mise à jour des données cyclones."""
+    """Récupère les bulletins et ne répond qu'une fois le stock remplacé."""
     try:
-        # Lancer la mise à jour en arrière-plan
-        thread = threading.Thread(target=force_update_cyclones_data)
-        thread.daemon = True
-        thread.start()
-        
+        storms = run_live_update()
+        if storms is None:
+            return jsonify({
+                "status": "error",
+                "message": "La récupération des bulletins a échoué",
+            }), 500
         return jsonify({
             "status": "success",
-            "message": "Mise à jour lancée en arrière-plan"
+            "cyclones": storms,
         })
     except Exception as e:
         return jsonify({
             "status": "error",
-            "message": str(e)
+            "message": str(e),
         }), 500
+
 
 @app.route('/status')
 def status():
@@ -75,12 +62,13 @@ def status():
         cached_data = get_cached_data()
         return jsonify({
             "status": "online",
+            "is_updating": update_in_progress(),
             "cache_available": cached_data is not None,
-            "cyclones_count": len(cached_data) if cached_data else 0,
-            "firebase_available": db is not None
+            "cyclones_count": len(cached_data) if cached_data is not None else 0,
+            "database_available": database_available(),
         })
     except Exception as e:
         return jsonify({
             "status": "error",
-            "message": str(e)
+            "message": str(e),
         }), 500

@@ -1,40 +1,58 @@
-var isZoomEnabled = false;
+var isMapLocked = false;
 
 export function setupMapControls(map) {
-    var zoomToggleButton = L.control({ position: 'topright' });
+    var lockButton = L.control({ position: 'topright' });
 
-    zoomToggleButton.onAdd = function () {
+    lockButton.onAdd = function () {
         var div = L.DomUtil.create('div', 'leaflet-bar leaflet-control leaflet-control-custom');
-        div.innerHTML = 'Activer le Zoom par défilement';
-        div.onclick = toggleZoom.bind(div, map);
+        div.setAttribute('role', 'button');
+        div.tabIndex = 0;
+        div.textContent = 'Verrouiller la carte';
+        L.DomEvent.disableClickPropagation(div);
+        var toggle = function () {
+            isMapLocked = !isMapLocked;
+            if (isMapLocked) {
+                map.scrollWheelZoom.disable();
+                map.dragging.disable();
+                div.textContent = 'Déverrouiller la carte';
+            } else {
+                map.scrollWheelZoom.enable();
+                map.dragging.enable();
+                div.textContent = 'Verrouiller la carte';
+            }
+        };
+        div.addEventListener('click', toggle);
+        div.addEventListener('keydown', function (event) {
+            if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                toggle();
+            }
+        });
         return div;
     };
 
-    zoomToggleButton.addTo(map);
+    lockButton.addTo(map);
 
     var resetViewButton = L.control({ position: 'topright' });
 
     resetViewButton.onAdd = function () {
         var div = L.DomUtil.create('div', 'leaflet-bar leaflet-control leaflet-control-custom');
-        div.innerHTML = 'Remettre la vue par défaut';
-        div.onclick = function () {
+        div.setAttribute('role', 'button');
+        div.tabIndex = 0;
+        div.textContent = 'Vue du monde';
+        L.DomEvent.disableClickPropagation(div);
+        var reset = function () {
             map.setView([10, 20], 2);
         };
+        div.addEventListener('click', reset);
+        div.addEventListener('keydown', function (event) {
+            if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                reset();
+            }
+        });
         return div;
     };
 
     resetViewButton.addTo(map);
-}
-
-function toggleZoom(map) {
-    if (isZoomEnabled) {
-        map.scrollWheelZoom.disable();
-        map.dragging.disable();
-        this.innerHTML = 'Activer le Zoom par défilement';
-    } else {
-        map.scrollWheelZoom.enable();
-        map.dragging.enable();
-        this.innerHTML = 'Désactiver le Zoom par défilement';
-    }
-    isZoomEnabled = !isZoomEnabled;
 }

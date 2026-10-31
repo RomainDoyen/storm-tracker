@@ -4,5 +4,6 @@ __pycache__
 env
 dependencies.md
 .env
-*firebase-adminsdk*.json
 venv/
+.neon
+node_modules/

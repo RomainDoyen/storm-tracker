@@ -1,43 +1,39 @@
 {% extends "base.html" %}
 
 {% block content %}
-    <div id="item-0">
-        <div class="card">
-            <div class="title">
-                <h3>Tempêtes actives</h3>
-                <button id="refresh-button" class="refresh-button" title="Actualiser les données">
-                    <img src="{{ url_for('static', filename='images/refresh-cw-alt-2-svgrepo-com.svg') }}" alt="Actualiser" class="refresh-icon">
-                </button>
-            </div>
-            <!-- Spinner de chargement -->
-            <div id="loading-spinner" class="loading-spinner">
-                <div class="spinner"></div>
-                <div class="loading-text">Chargement des données cyclones...</div>
-                <div class="loading-subtext">Récupération en cours depuis les sources météorologiques</div>
-            </div>
-            <!-- Contenu des cyclones -->
-            <div id="active-storms" class="loading-hidden"></div>
+    <div id="item-1" class="chart">
+        <div id="map"></div>
+        <div id="map-loading" class="map-loading" role="status">
+            <div class="spinner" aria-hidden="true"></div>
+            <p>Chargement de la carte</p>
         </div>
     </div>
-    <div id="item-1">
-        <div id="map" style="height: 600px;"></div>
-    </div>
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
-        import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
-
-        // La configuration Firebase sera injectée par le serveur
-        const firebaseConfig = {
-            apiKey: "{{ firebase_config.api_key }}",
-            authDomain: "{{ firebase_config.auth_domain }}",
-            projectId: "{{ firebase_config.project_id }}",
-            storageBucket: "{{ firebase_config.storage_bucket }}",
-            messagingSenderId: "{{ firebase_config.messaging_sender_id }}",
-            appId: "{{ firebase_config.app_id }}"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-    </script>
+    <aside id="item-0" class="panel">
+        <header class="mast">
+            <p class="mast-name">Traqueur de Tempêtes</p>
+            <button id="refresh-button" class="refresh-button" type="button">
+                <svg class="refresh-icon" viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M20 12a8 8 0 0 1-13.7 5.6M4 12a8 8 0 0 1 13.7-5.6M4 18v-4h4M20 6v4h-4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="square" stroke-linejoin="miter"/>
+                </svg>
+                Actualiser
+            </button>
+        </header>
+        <div class="legend">
+            <div class="legend-head">
+                <h1 id="plot-name" aria-live="polite">Tempêtes actives</h1>
+            </div>
+            <div id="loading-spinner" class="loading-spinner" role="status">
+                <div class="spinner" aria-hidden="true"></div>
+                <div>
+                    <p class="loading-text">Réception du bulletin</p>
+                    <p class="loading-subtext">Lecture des fichiers NHC et UCAR.</p>
+                </div>
+            </div>
+            <div id="active-storms" class="loading-hidden"></div>
+        </div>
+        <footer class="colophon">
+            <p>&copy; {{ year }} Traqueur de Tempêtes. Données du <a href="https://www.nhc.noaa.gov/" target="_blank" rel="noopener">NHC</a> et de l’<a href="https://hurricanes.ral.ucar.edu/" target="_blank" rel="noopener">UCAR</a>.</p>
+        </footer>
+    </aside>
     <script type="module" src="{{ url_for('static', filename='js/map.js') }}"></script>
 {% endblock %}

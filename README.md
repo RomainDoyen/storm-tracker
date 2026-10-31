@@ -1,6 +1,6 @@
 # Storm Tracker 🌀
 
-Une application web qui suit en temps réel les tempêtes et cyclones à travers le monde. Elle utilise l'API [Tropycal](https://tropycal.github.io/tropycal/index.html) pour récupérer les données et Firebase pour le stockage.
+Une application web qui suit en temps réel les tempêtes et cyclones à travers le monde. Elle lit les bulletins du NHC et d'UCAR, et stocke les cyclones actifs dans Postgres sur Neon.
 
 ## Fonctionnalités
 
@@ -13,7 +13,7 @@ Une application web qui suit en temps réel les tempêtes et cyclones à travers
 ## Prérequis
 
 - Python 3.8 ou supérieur
-- Un compte Firebase
+- Un projet Neon avec `DATABASE_URL` et `DATABASE_URL_UNPOOLED` dans `.env`
 - pip (gestionnaire de paquets Python)
 
 ## Installation
@@ -31,14 +31,11 @@ cd storm-tracker
 pip install -r requirements.txt
 ```
 
-3. Configuration de Firebase
+3. Récupérez les variables Neon
 
-- Créez un projet sur [Firebase Console](https://console.firebase.google.com/)
-- Activez Firestore Database dans votre projet
-- Générez un fichier de configuration d'administration (clé privée) :
-  - Allez dans Paramètres du projet > Comptes de service
-  - Cliquez sur "Générer une nouvelle clé privée"
-  - Téléchargez le fichier JSON et placez-le à la racine du projet
+```bash
+neon env pull
+```
 
 4. Lancez l'application
 
@@ -48,9 +45,9 @@ python run.py
 
 L'application sera accessible à l'adresse [http://127.0.0.1:7000/](http://127.0.0.1:7000/)
 
-## Structure des données Firebase
+## Structure des données
 
-La collection `Cyclones` dans Firestore stocke les informations suivantes pour chaque tempête :
+La table `cyclones` dans Neon stocke les informations suivantes pour chaque tempête :
 
 ```javascript
 {

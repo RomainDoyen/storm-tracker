@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans:ital,wght@0,100..900;1,100..900&family=SUSE:wght@100..800&display=swap');
 @import url("main/main.css");
 @import url("card-storms/card-storms.css");
 @import url("map/map.css");
+@import url("spinner.css");
